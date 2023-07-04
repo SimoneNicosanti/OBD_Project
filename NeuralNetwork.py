@@ -7,7 +7,7 @@ class NeuralNetwork :
 
         self.firstLayer = Layer(inputDim)
         self.lastLayer = Layer(outputDim)
-
+  
         prevLayer = None
         currLayer = self.firstLayer
         for i in range(0, hiddenLayerNum + 2) :
