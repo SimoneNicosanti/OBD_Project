@@ -1,3 +1,4 @@
+import numpy as np
 from Layer import Layer
 
 class NeuralNetwork :
@@ -25,6 +26,23 @@ class NeuralNetwork :
 
         return
 
+
+    def evaluate(self, input : np.ndarray) -> np.ndarray :
+        layer : Layer = self.firstLayer
+        layer.forwardPropagation(input)
+        layer = layer.nextLayer
+
+        while (layer.nextLayer != None):
+            layer.forwardPropagation()
+            layer = layer.nextLayer
+
+        prob = layer.getOutput()
+
+        y = np.zeros(input.shape[0])
+        y[prob >= 0.5] = 1
+        y[prob < 0.5] = 0
+
+        return y
 
     def fit() :
         pass
