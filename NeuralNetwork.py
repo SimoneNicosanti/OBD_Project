@@ -27,7 +27,7 @@ class NeuralNetwork :
         return
 
 
-    def evaluate(self, input : np.ndarray) -> np.ndarray :
+    def predict(self, input : np.ndarray) -> np.ndarray :
         layer : Layer = self.firstLayer
         layer.forwardPropagation(input)
         layer = layer.nextLayer
@@ -38,14 +38,13 @@ class NeuralNetwork :
 
         prob = layer.getOutput()
 
-        y = np.zeros(input.shape[0])
+        print(prob.shape)
+
+        y = np.zeros(prob.shape)
         y[prob >= 0.5] = 1
         y[prob < 0.5] = 0
 
         return y
 
     def fit() :
-        pass
-
-    def evaluate() :
         pass

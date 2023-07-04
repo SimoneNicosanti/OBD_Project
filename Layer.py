@@ -1,37 +1,41 @@
-from Layer import Layer
 import numpy as np
 
 class Layer :
 
     def __init__(self, neuronNumber : int) -> None :
         self.neuronNumber = neuronNumber
-        self.prevLayer : Layer = None
-        self.nextLayer : Layer = None
+        self.prevLayer = None
+        self.nextLayer = None
         self.weightMatrix : np.ndarray = None
         self.biasArray : np.ndarray = np.zeros(neuronNumber)
         self.outputArray : np.ndarray = np.zeros(neuronNumber)
 
-    def setPrevAndNextLayer(self, prevLayer : Layer, nextLayer : Layer) -> None :
-        self.weightMatrix = np.random.uniform(-1, 1, ((self.neuronNumber, nextLayer.getNeuronNumber())))
+    def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
         self.prevLayer = prevLayer
         self.nextLayer = nextLayer
+        
+        if (prevLayer != None) :
+            self.weightMatrix = np.random.uniform(-1, 1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
+            print(self.weightMatrix.shape)
 
     def getNeuronNumber(self) -> int :
         return self.neuronNumber
 
     def forwardPropagation(self, input : np.ndarray = None) -> None :
         if (self.prevLayer == None) :
-            inputArray = input
+            self.outputArray = input
+            print("dim input: ", input.shape)
         else :
             inputArray = self.prevLayer.getOutput()
+            print("dim z: ", inputArray.shape)
+            print("dim w: ", self.weightMatrix.shape)
+            print("dim b:", self.biasArray.shape)
+            z_array = np.dot(inputArray, self.weightMatrix) + self.biasArray
 
-        z_array = np.dot(self.weightMatrix, inputArray) + self.biasArray
-
-        if (self.nextLayer == None) :
-            self.outputArray = self.__sigmoid(z_array)
-        else :
-            self.outputArray = self.__relu(z_array)
-
+            if (self.nextLayer == None) :
+                self.outputArray = self.__sigmoid(z_array)
+            else :
+                self.outputArray = self.__relu(z_array)
         return
     
     def getOutput(self) -> np.ndarray :

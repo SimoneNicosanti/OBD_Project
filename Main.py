@@ -16,7 +16,7 @@ X_min = X_train.min(axis=0)
 X_train = (X_train - X_min)/(X_max-X_min)
 X_test = (X_test - X_min)/(X_max-X_min)
 
-model = NeuralNetwork(1, X_test.shape[0], y_test.shape[0], 2)
+model = NeuralNetwork(5, 30, 2, 100)
 #model.fit(X_train, y_train, epochs=500, lr=0.01)
 
-print(model.evaluate(X_test, y_test))
+print(model.predict(X_test))
