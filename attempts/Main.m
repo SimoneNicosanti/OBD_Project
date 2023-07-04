@@ -1,0 +1,13 @@
+CSV_URL = 'https://raw.githubusercontent.com/ProfAI/tutorials/master/Come%20Creare%20una%20Rete%20Neurale%20da%20Zero/breast_cancer.csv' ;
+breast_cancer = readtable(CSV_URL);
+X = table2array(breast_cancer(:, 1:end-1));
+y = table2array(breast_cancer(:, end));
+[X_train, X_test, y_train, y_test] = train_test_split(X, y, 0.3);
+X_max = max(X_train);
+X_min = min(X_train);
+X_train = (X_train - X_min) ./ (X_max - X_min);
+X_test = (X_test - X_min) ./ (X_max - X_min);
+model = NeuralNetwork();
+model.fit(X_train, y_train, 500, 0.01);
+[accuracy, log_loss] = model.evaluate(X_test, y_test);
+disp([accuracy, log_loss]);
