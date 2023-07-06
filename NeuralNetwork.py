@@ -1,5 +1,6 @@
 import numpy as np
 from Layer import Layer
+from Utils import *
 
 class NeuralNetwork :
 
@@ -46,5 +47,44 @@ class NeuralNetwork :
 
         return y
 
-    def fit() :
-        pass
+    def backpropagation(self, labels : np.ndarray) -> np.ndarray :
+        layer : Layer = self.lastLayer
+        # TODO
+        # controllare indici del for
+        de_da = []
+        de_dw = []
+        for j in range(0, layer.neuronNumber) :
+            prev_layer : Layer = layer.prevLayer
+            de_da.append(derivative_e_y(layer.getOutput()[j], labels[j]) * 1)
+            for i in range(0, prev_layer.neuronNumber) :
+                if (i == 0) :
+                    da_dw = -1
+                else:
+                    da_dw = prev_layer.getOutput()[i]
+                de_dw.append(de_da[j] * da_dw)
+
+        layer = layer.prevLayer
+
+        while layer.prevLayer != None :
+            prev_layer : Layer = layer.prevLayer
+            next_layer : Layer = layer.nextLayer
+            de_da_prev : np.ndarray = np.array(de_da)
+            de_da = []
+            for j in range(0, prev_layer.neuronNumber) :
+                dg = layer.relu_derivative(layer.aArray[j])
+                de_da.append(dg * np.dot(de_da_prev, next_layer.weightMatrix[j]))
+                for i in range(0, prev_layer.neuronNumber) :
+                    if (i == 0) :
+                        da_dw = -1
+                    else:
+                        da_dw = prev_layer.getOutput()[i]
+                    de_dw.append(de_da[j] * da_dw)
+
+            layer = layer.prevLayer
+
+        return np.array(de_dw)
+
+    def fit(self, x, y) :
+        predictions : np.ndarray = self.predict(x)
+        de_dw : np.ndarray = self.backpropagation(y)
+        print(de_dw)

@@ -23,3 +23,12 @@ def train_test_split(X, y, test_size=0.3, random_state=None):
   y_train = np.delete(y, test_indices, axis=0)
 
   return (X_train, X_test, y_train, y_test )
+
+def softmax(output : np.ndarray) -> np.ndarray :
+  return np.power(np.e, output) / np.sum(np.power(np.e, output))
+
+def derivative_cross_entropy(output : np.ndarray) -> np.ndarray:
+  return 1 - softmax(output)
+
+def derivative_e_y(output : np.ndarray, labels : np.ndarray) -> np.ndarray:
+  return np.dot(labels, derivative_cross_entropy(output))

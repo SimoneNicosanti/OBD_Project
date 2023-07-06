@@ -1,4 +1,4 @@
- import pandas as pd
+import pandas as pd
 from Utils import train_test_split
 from NeuralNetwork import NeuralNetwork
 
@@ -16,7 +16,9 @@ X_min = X_train.min(axis=0)
 X_train = (X_train - X_min)/(X_max-X_min)
 X_test = (X_test - X_min)/(X_max-X_min)
 
-model = NeuralNetwork(5, 30, 2, 100)
+model = NeuralNetwork(5, 30, 2, 5)
 #model.fit(X_train, y_train, epochs=500, lr=0.01)
 
 print(model.predict(X_test))
+
+print(model.fit(X_train, y_train))
