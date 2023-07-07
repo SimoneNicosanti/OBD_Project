@@ -27,6 +27,7 @@ def train_test_split(X, y, test_size=0.3, random_state=None):
 def softmax(output : np.ndarray) -> np.ndarray :
   return np.power(np.e, output) / np.sum(np.power(np.e, output))
 
+## TODO Forse bisogna aggiungere un meno: rivedere formula
 def derivative_cross_entropy(output : np.ndarray) -> np.ndarray:
   return 1 - softmax(output)
 

@@ -17,7 +17,7 @@ class Layer :
         
         if (prevLayer != None) :
             self.weightMatrix = np.random.uniform(-1, 1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
-            print(self.weightMatrix.shape)
+            self.biasArray = np.random.uniform(-1, 1, self.getNeuronNumber())
 
     def getNeuronNumber(self) -> int :
         return self.neuronNumber
@@ -25,29 +25,32 @@ class Layer :
     def forwardPropagation(self, input : np.ndarray = None) -> None :
         if (self.prevLayer == None) :
             self.outputArray = input
-            print("dim input: ", input.shape)
+            #print("dim input: ", input.shape)
         else :
             inputArray = self.prevLayer.getOutput()
-            print("dim z: ", inputArray.shape)
-            print("dim w: ", self.weightMatrix.shape)
-            print("dim b:", self.biasArray.shape)
+            #print("dim z: ", inputArray.shape)
+            #print("dim w: ", self.weightMatrix.shape)
+            #print("dim b:", self.biasArray.shape)
 
             # TODO
             # check dimensioni
-            self.aArray = np.dot(inputArray, self.weightMatrix) + self.biasArray
+            # print(self.weightMatrix)
+            # print(inputArray)
+            self.aArray = np.dot(self.weightMatrix.T, inputArray) + self.biasArray
 
             if (self.nextLayer == None) :
-                self.outputArray = self.__sigmoid(self.aArray)
+                #self.outputArray = self.__sigmoid(self.aArray)
+                self.outputArray = self.aArray ## Identity function
+                print("LastLayerOutput", self.outputArray)
             else :
                 self.outputArray = self.__relu(self.aArray)
+
         return
 
     def getOutput(self) -> np.ndarray :
         return self.outputArray
 
-    def __softmax(self, output) -> np.ndarray :
-        return np.power(np.e, output) / np.sum(np.power(np.e, output))
-
+    
     def __cross_entropy_loss(self, y_true, y_pred) :
         return -np.sum(y_true * np.log(y_pred))
 
