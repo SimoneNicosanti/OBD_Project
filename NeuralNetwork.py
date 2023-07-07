@@ -49,7 +49,7 @@ class NeuralNetwork :
 
         ## TODO: Correggere i layer.nextLayer e i layer.prevLayer nei cicli 
         # messo così non si opera mai su prime e ultimo livello --> combiare in layer != None
-        while (layer.nextLayer != None):
+        while layer != None:
             layer.forwardPropagation()
             layer = layer.nextLayer
 
@@ -62,9 +62,10 @@ class NeuralNetwork :
         # controllare indici del for --> Forse risolto con +1
         de_da = []
         de_dw = []
+        de_dy = derivative_e_y(layer.getOutput(), labels)
         for j in range(0, layer.neuronNumber) :
             prev_layer : Layer = layer.prevLayer
-            de_da.append(derivative_e_y(layer.getOutput()[j], labels[j]) * 1)
+            de_da.append(de_dy[j] * 1)
             for i in range(0, prev_layer.neuronNumber + 1) :
                 if (i == prev_layer.neuronNumber) :
                     da_dw = -1
@@ -113,7 +114,7 @@ class NeuralNetwork :
             print("Output", self.lastLayer.getOutput())
             elemLabel = Y_train[i]
 
-            elemLabelsArray = (sortedLabels == elemLabel)
+            elemLabelsArray = (sortedLabels == elemLabel).astype(int)
 
             de_dw : np.ndarray = self.backpropagation(elemLabelsArray)
             if (not initialized) :

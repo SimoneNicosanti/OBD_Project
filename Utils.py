@@ -32,4 +32,5 @@ def derivative_cross_entropy(output : np.ndarray) -> np.ndarray:
   return 1 - softmax(output)
 
 def derivative_e_y(output : np.ndarray, labels : np.ndarray) -> np.ndarray:
-  return np.dot(labels, derivative_cross_entropy(output))
+  return - labels + softmax(output)
+  #return np.dot(labels, derivative_cross_entropy(output))

@@ -18,13 +18,13 @@ def main() :
     X_train = (X_train - X_min)/(X_max-X_min)
     X_test = (X_test - X_min)/(X_max-X_min)
 
-    model = NeuralNetwork(5, 30, 2, 10)
+    model = NeuralNetwork(5, 30, 2, 5)
     #model.fit(X_train, y_train, epochs=500, lr=0.01)
 
 
     #print(model.predict(X_test))
 
-    print(model.fit(X_train, y_train))
+    model.fit(X_train, y_train)
 
 if __name__ == "__main__" :
     main()
