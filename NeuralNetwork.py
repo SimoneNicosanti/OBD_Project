@@ -70,11 +70,12 @@ class NeuralNetwork :
             for i in range(0, prev_layer.neuronNumber + 1) :
                 if (i == prev_layer.neuronNumber) :
                     da_dw = -1
+                    de_dw.append(de_da[j] * da_dw)
+                    layer.de_dw_bias[j] += de_da[j] * da_dw
                 else:
                     da_dw = prev_layer.getOutput()[i]
-                de_dw.append(de_da[j] * da_dw)
-
-        print("de_da", de_da)
+                    de_dw.append(de_da[j] * da_dw)
+                    layer.de_dw_matrix[i][j] += de_da[j] * da_dw
 
         layer = layer.prevLayer
 
@@ -89,9 +90,12 @@ class NeuralNetwork :
                 for i in range(0, prev_layer.neuronNumber + 1) :
                     if (i == prev_layer.neuronNumber) :
                         da_dw = -1
+                        de_dw.append(de_da[j] * da_dw)
+                        layer.de_dw_bias[j] += de_da[j] * da_dw
                     else:
                         da_dw = prev_layer.getOutput()[i]
-                    de_dw.append(de_da[j] * da_dw)
+                        de_dw.append(de_da[j] * da_dw)
+                        layer.de_dw_matrix[i][j] += de_da[j] * da_dw
 
             layer = layer.prevLayer
 
@@ -125,6 +129,20 @@ class NeuralNetwork :
                 initialized = True
             else :
                 de_dw_tot += de_dw
+
+        k = 0
+        err = 0
+        while (err < 1e-3):
+            alpha_k = diminishing_stepsize(k)
+            # TODO
+            # fare il diminishing stepsize
+
+
+            k += 1
+
+        print(self.lastLayer.de_dw_matrix)
+        print(self.lastLayer.de_dw_bias)
+            
 
         print(de_dw_tot)
     

@@ -7,7 +7,9 @@ class Layer :
         self.prevLayer = None
         self.nextLayer = None
         self.weightMatrix : np.ndarray = None
+        self.de_dw_matrix: np.ndarray = None
         self.biasArray : np.ndarray = np.zeros(neuronNumber)
+        self.de_dw_bias : np.ndarray = np.zeros(neuronNumber)
         self.aArray : np.ndarray = np.zeros(neuronNumber)
         self.outputArray : np.ndarray = np.zeros(neuronNumber)
 
@@ -17,6 +19,7 @@ class Layer :
         
         if (prevLayer != None) :
             self.weightMatrix = np.random.uniform(-1, 1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
+            self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
             self.biasArray = np.random.uniform(-1, 1, self.getNeuronNumber())
 
     def getNeuronNumber(self) -> int :
@@ -50,7 +53,6 @@ class Layer :
     def getOutput(self) -> np.ndarray :
         return self.outputArray
 
-    
     def __cross_entropy_loss(self, y_true, y_pred) :
         return -np.sum(y_true * np.log(y_pred))
 

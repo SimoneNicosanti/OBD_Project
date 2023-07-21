@@ -25,7 +25,6 @@ def train_test_split(X, y, test_size=0.3, random_state=None):
 
   return (X_train, X_test, y_train, y_test )
 
-
 def datasetSplit(dataset : pd.DataFrame, targetName : str, testSetSize : float = 0.2, validationSetSize : float = 0.2) :
     
     featuresMatrix = dataset.drop(targetName, axis=1).values 
@@ -56,8 +55,6 @@ def datasetSplit(dataset : pd.DataFrame, targetName : str, testSetSize : float =
 
     return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
-
-
 def softmax(output : np.ndarray) -> np.ndarray :
   return np.power(np.e, output) / np.sum(np.power(np.e, output))
 
@@ -69,3 +66,6 @@ def derivative_cross_entropy(output : np.ndarray) -> np.ndarray:
 def derivative_e_y(output : np.ndarray, labels : np.ndarray) -> np.ndarray:
   return - labels + softmax(output)
   #return np.dot(labels, derivative_cross_entropy(output))
+
+def diminishing_stepsize(k : int) -> float:
+  return 1 / (k + 1)

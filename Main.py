@@ -11,7 +11,7 @@ def main() :
 
     X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetSplit(dataset = breast_cancer, targetName = "malignant")
  
-    model = NeuralNetwork(10, 30, 2, 128)
+    model = NeuralNetwork(2, 30, 2, 16)
 
     model.fit(X_train, Y_train)
     # model.predict(X_test, Y_test)
