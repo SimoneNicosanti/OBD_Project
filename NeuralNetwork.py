@@ -5,6 +5,7 @@ from Utils import *
 class NeuralNetwork :
 
     def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNum : int) -> None:
+
         self.hiddenLayerNum = hiddenLayerNum
 
         self.firstLayer = Layer(inputDim)
@@ -97,18 +98,20 @@ class NeuralNetwork :
         return np.array(de_dw)
 
 
-    def fit(self, X_train, Y_train) :
+    def fit(self, X_train : np.ndarray , Y_train : np.ndarray) :
 
         numpyLabels : np.ndarray = np.array(Y_train)
         uniqueLables = np.unique(numpyLabels)
         sortedLabels = np.sort(uniqueLables)
 
+        normalized_X_train = (X_train - X_train.mean()) / X_train.std()
+
         ## TODO
         ## Y_train è un unico array: bisogna convertire il singolo y_train in un array di tutti 0 ed un 1 --> Fatto
         de_dw_tot = None
         initialized = False
-        for i in range(0, 1) :
-            elem = X_train[i]
+        for i in range(0, len(normalized_X_train)) :
+            elem = normalized_X_train[i]
             self.do_forwarding(elem)
 
             print("Output", self.lastLayer.getOutput())
