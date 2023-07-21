@@ -67,5 +67,4 @@ def derivative_e_y(output : np.ndarray, labels : np.ndarray) -> np.ndarray:
   #return np.dot(labels, derivative_cross_entropy(output))
 
 def diminishing_stepsize(k : int) -> float:
-  #return 1 / (k + 1)
-  return 0.01
+  return 1 / (k + 1)

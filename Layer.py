@@ -19,9 +19,9 @@ class Layer :
         self.nextLayer = nextLayer
 
         if (prevLayer != None) :
-            self.weightMatrix = np.random.uniform(-0.5, 0.5, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
+            self.weightMatrix = np.random.uniform(-1, 1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
             self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
-            self.biasArray = np.random.uniform(-0.5, 0.5, self.getNeuronNumber())
+            self.biasArray = np.random.uniform(-1, 1, self.getNeuronNumber())
 
     def getNeuronNumber(self) -> int :
         return self.neuronNumber
@@ -46,10 +46,10 @@ class Layer :
             if (self.nextLayer == None) :
                 #self.outputArray = self.__sigmoid(self.aArray)
                 self.outputArray = self.aArray ## Identity function
-                self.outputArray = softmax(self.outputArray)
+                #self.outputArray = softmax(self.outputArray)
                 #print("LastLayerOutput", self.outputArray)
             else :
-                self.outputArray = self.__sigmoid(self.aArray)
+                self.outputArray = self.__relu(self.aArray)
 
         return
 

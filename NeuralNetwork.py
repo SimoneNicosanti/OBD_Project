@@ -64,6 +64,8 @@ class NeuralNetwork :
             realClassIndex = elemLabelsArray.argmax()
             if (predictions[realClassIndex] == 1) :
                 accuracy += 1
+
+            print(predictions, elemLabelsArray)
         accuracy /= X_test.shape[0]
         print(accuracy)
 
@@ -132,10 +134,10 @@ class NeuralNetwork :
         while layer != None :
             alpha = diminishing_stepsize(k)
 
-            print("weight matrix", layer.weightMatrix)
-            print("bias: ", layer.biasArray)
-            print("update matrix: ", layer.de_dw_matrix)
-            print("update bias: ", layer.de_dw_bias)
+            # print("weight matrix", layer.weightMatrix)
+            # print("bias: ", layer.biasArray)
+            # print("update matrix: ", layer.de_dw_matrix)
+            # print("update bias: ", layer.de_dw_bias)
 
             layer.update_weights(alpha)
             layer = layer.nextLayer
@@ -164,6 +166,7 @@ class NeuralNetwork :
         precision = epsilon
         k = 0
         while (precision >= epsilon and k <= max_steps) :
+            print("Precisione: ", precision, "--", "K: ", k)
             self.reset_de_dw()
             for i in range(0, len(normalized_X_train)) :
                 elem = normalized_X_train[i]
@@ -183,8 +186,6 @@ class NeuralNetwork :
             initialized = False
             self.update_weights(k)
             k += 1
-            print("Precisione: ", precision)
-            print("K: ", k)
 
         #print(de_dw_tot)
     
