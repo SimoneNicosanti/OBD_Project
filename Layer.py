@@ -1,4 +1,5 @@
 import numpy as np
+from Utils import *
 
 class Layer :
 
@@ -16,11 +17,11 @@ class Layer :
     def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
         self.prevLayer = prevLayer
         self.nextLayer = nextLayer
-        
+
         if (prevLayer != None) :
-            self.weightMatrix = np.random.uniform(-1, 1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
+            self.weightMatrix = np.random.uniform(-0.5, 0.5, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
             self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
-            self.biasArray = np.random.uniform(-1, 1, self.getNeuronNumber())
+            self.biasArray = np.random.uniform(-0.5, 0.5, self.getNeuronNumber())
 
     def getNeuronNumber(self) -> int :
         return self.neuronNumber
@@ -37,19 +38,29 @@ class Layer :
 
             # TODO
             # check dimensioni
-            # print(self.weightMatrix)
-            # print(inputArray)
-            self.aArray = np.dot(self.weightMatrix.T, inputArray) + self.biasArray
+            #print("Matrice pesi", self.weightMatrix)
+            #print("Input", inputArray)
+            #print("Dimensioni", inputArray.shape)
+            self.aArray = np.dot(self.weightMatrix.T, inputArray) - self.biasArray
 
             if (self.nextLayer == None) :
                 #self.outputArray = self.__sigmoid(self.aArray)
                 self.outputArray = self.aArray ## Identity function
-                print("LastLayerOutput", self.outputArray)
+                self.outputArray = softmax(self.outputArray)
+                #print("LastLayerOutput", self.outputArray)
             else :
-                self.outputArray = self.__relu(self.aArray)
+                self.outputArray = self.__sigmoid(self.aArray)
 
         return
 
+    def reset_de_dw(self) -> None :
+        self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
+        self.de_dw_bias : np.ndarray = np.zeros(self.neuronNumber)
+
+    def update_weights(self, alpha : float) -> None :
+        self.weightMatrix -= alpha * self.de_dw_matrix
+        self.biasArray -= alpha * self.de_dw_bias
+        
     def getOutput(self) -> np.ndarray :
         return self.outputArray
 
@@ -60,6 +71,7 @@ class Layer :
         return 1 / (1 + np.power(np.e, -z_array))
 
     def __relu(self, z_array) -> np.ndarray :
+        #z_array = z_array / np.linalg.norm(z_array)
         return np.maximum(z_array, 0)
     
     def relu_derivative(self, z_array : np.ndarray) :

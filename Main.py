@@ -11,10 +11,10 @@ def main() :
 
     X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetSplit(dataset = breast_cancer, targetName = "malignant")
  
-    model = NeuralNetwork(2, 30, 2, 16)
+    model = NeuralNetwork(1, 30, 2, 4)
 
-    model.fit(X_train, Y_train)
-    # model.predict(X_test, Y_test)
+    model.fit(X_train, Y_train, 1e-18, 1e2)
+    model.predict(X_test, Y_test)
 
 if __name__ == "__main__" :
     main()

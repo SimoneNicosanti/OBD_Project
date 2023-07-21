@@ -56,8 +56,7 @@ def datasetSplit(dataset : pd.DataFrame, targetName : str, testSetSize : float =
     return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
 def softmax(output : np.ndarray) -> np.ndarray :
-  return np.power(np.e, output) / np.sum(np.power(np.e, output))
-
+  return np.power(np.e, output - output.max()) / np.sum(np.power(np.e, output - output.max()))
 
 ## TODO Forse bisogna aggiungere un meno: rivedere formula
 def derivative_cross_entropy(output : np.ndarray) -> np.ndarray:
@@ -68,4 +67,5 @@ def derivative_e_y(output : np.ndarray, labels : np.ndarray) -> np.ndarray:
   #return np.dot(labels, derivative_cross_entropy(output))
 
 def diminishing_stepsize(k : int) -> float:
-  return 1 / (k + 1)
+  #return 1 / (k + 1)
+  return 0.01
