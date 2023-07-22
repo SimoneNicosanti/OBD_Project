@@ -155,9 +155,10 @@ class NeuralNetwork :
         uniqueLables = np.unique(numpyLabels)
         sortedLabels = np.sort(uniqueLables)
 
-        self.train_mean = X_train.mean()
-        self.train_std = X_train.std()
-        normalized_X_train = (X_train - self.train_mean) / self.train_std
+        self.train_mean = X_train.mean(axis = 0)
+        self.train_std = X_train.std(axis = 0)
+        normalized_X_train = np.divide(np.add(X_train, self.train_mean), self.train_std)
+        
 
         ## TODO
         ## Y_train è un unico array: bisogna convertire il singolo y_train in un array di tutti 0 ed un 1 --> Fatto

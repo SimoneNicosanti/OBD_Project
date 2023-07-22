@@ -44,10 +44,7 @@ class Layer :
             self.aArray = np.dot(self.weightMatrix.T, inputArray) - self.biasArray
 
             if (self.nextLayer == None) :
-                #self.outputArray = self.__sigmoid(self.aArray)
                 self.outputArray = self.aArray ## Identity function
-                #self.outputArray = softmax(self.outputArray)
-                #print("LastLayerOutput", self.outputArray)
             else :
                 self.outputArray = self.__relu(self.aArray)
 
