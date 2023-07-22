@@ -63,8 +63,9 @@ def derivative_cross_entropy(output : np.ndarray) -> np.ndarray:
   return 1 - softmax(output)
 
 def derivative_e_y(output : np.ndarray, labels : np.ndarray) -> np.ndarray:
-  print(- labels * (1 - softmax(output)))
-  return - labels * (1 - softmax(output))
+  #print(- labels * (1 - softmax(output)))
+  #return - labels * (1 - softmax(output))
+  return - labels + softmax(output)
   #return np.dot(labels, derivative_cross_entropy(output))
 
 def diminishing_stepsize(k : int) -> float:
