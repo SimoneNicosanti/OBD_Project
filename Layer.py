@@ -45,6 +45,7 @@ class Layer :
         self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
         self.de_dw_bias : np.ndarray = np.zeros(self.neuronNumber)
 
+    # TODO : inserire parametri di regolarizzazione
     def update_weights(self, alpha : float) -> None :
         self.weightMatrix -= alpha * self.de_dw_matrix
         self.biasArray -= alpha * self.de_dw_bias

@@ -45,13 +45,11 @@ class NeuralNetwork :
             elem = normalized_X_test[i]
             self.do_forwarding(elem)
 
-            #print("Output", self.lastLayer.getOutput())
             elemLabel = Y_test[i]
 
             elemLabelsArray : np.ndarray = (sortedLabels == elemLabel).astype(int)
 
             networkOutput = self.lastLayer.getOutput()
-            #networkOutput = networkOutput / np.linalg.norm(networkOutput, 1)
 
             probs = softmax(networkOutput)
             maxProbIndex = probs.argmax()
@@ -126,7 +124,6 @@ class NeuralNetwork :
     
     def update_weights(self, alpha) :
         layer : Layer = self.firstLayer.nextLayer
-        #alpha = diminishing_stepsize(k)
         while layer != None :
             layer.update_weights(alpha)
             layer = layer.nextLayer
@@ -146,21 +143,22 @@ class NeuralNetwork :
         sortedLabels = np.sort(uniqueLables)
 
         self.train_mean = X_train.mean(axis = 0)
-        self.train_std = X_train.std(axis = 0)
+        self.train_std = X_train.std(axis = 0) + 1e-3
         normalized_X_train = (X_train - self.train_mean) / self.train_std
         
         de_dw_tot : np.ndarray = None
-        accumulator = 0
-        initialized = False
-        precision = epsilon
+        #accumulator = None
+        #initialized_accumulator = False
+        initialized_de_dw = False
+        gradient_norm = epsilon
+        gradient_norm_array = []
         k = 0
-        while (precision >= epsilon and k <= max_steps) :
-            print("Precisione: ", precision, "--", "K: ", k)
+        while (gradient_norm >= epsilon and k <= max_steps) :
             self.reset_de_dw()
 
             # TODO : Stochastic Gradient Descent -> SAGA
 
-            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/3 * len(normalized_X_train) + k), len(normalized_X_train)))
+            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
             mini_batch_train = normalized_X_train[mini_batch_indexes]
             mini_batch_labels = Y_train[mini_batch_indexes]
 
@@ -171,18 +169,31 @@ class NeuralNetwork :
                 elemLabelsArray = (sortedLabels == elemLabel).astype(int)
 
                 de_dw : np.ndarray = self.backpropagation(elemLabelsArray, i)
-                if (not initialized) :
+                if (not initialized_de_dw) :
                     de_dw_tot = de_dw
-                    initialized = True
+                    initialized_de_dw = True
                 else :
                     de_dw_tot += de_dw
             
-            # TODO : ricontrollare algoritmo AdaGrad
-
-            precision = np.linalg.norm(de_dw_tot)
-            accumulator += precision ** 2
-            initialized = False
-            #self.update_weights(1 / np.sqrt(accumulator))
-            self.update_weights(1 / precision)
+            initialized_de_dw = False
+            gradient_norm = np.linalg.norm(de_dw_tot)
+            gradient_norm_array.append(gradient_norm)
+            print("Gradient's norm: ", gradient_norm, "--", "K: ", k)
             k += 1
+
+            # TODO : ricontrollare algoritmo AdaGrad ed RMSProp
+            #if (not initialized_accumulator) :
+                #accumulator = de_dw_tot ** 2 #AdaGrad
+                #accumulator = (1 - 0.9) * de_dw_tot ** 2 #RMSProp
+            #else :
+                #accumulator += de_dw_tot ** 2 #AdaGrad
+                #accumulator = 0.9 * accumulator + (1 - 0.9) * de_dw_tot ** 2 #RMSProp
+                #initialized_accumulator = True
+
+            #self.update_weights(1 / np.linalg.norm(np.sqrt(accumulator) + 1e-8))
+            self.update_weights(1 / gradient_norm)
+
+        cartesian_plot(np.arange(0, k, 1), gradient_norm_array, "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
+
+        return
     
