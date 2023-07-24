@@ -19,9 +19,9 @@ class Layer :
         self.nextLayer = nextLayer
 
         if (prevLayer != None) :
-            self.weightMatrix = np.random.uniform(-1, 1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
+            self.weightMatrix = np.random.uniform(1e-5, 0.1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
             self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
-            self.biasArray = np.random.uniform(-1, 1, self.getNeuronNumber())
+            self.biasArray = np.random.uniform(-0.1, 0.1, self.getNeuronNumber())
 
     def getNeuronNumber(self) -> int :
         return self.neuronNumber

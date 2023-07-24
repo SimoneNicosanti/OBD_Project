@@ -129,11 +129,11 @@ class NeuralNetwork :
 
         return np.array(de_dw)
     
-    def update_weights(self, k) :
+    def update_weights(self, alpha) :
         layer : Layer = self.firstLayer.nextLayer
+        #alpha = diminishing_stepsize(k)
         while layer != None :
-            alpha = diminishing_stepsize(k)
-
+            
             # print("weight matrix", layer.weightMatrix)
             # print("bias: ", layer.biasArray)
             # print("update matrix: ", layer.de_dw_matrix)
@@ -141,6 +141,7 @@ class NeuralNetwork :
 
             layer.update_weights(alpha)
             layer = layer.nextLayer
+
 
     def reset_de_dw(self) -> None :
         layer : Layer = self.firstLayer.nextLayer
@@ -157,7 +158,7 @@ class NeuralNetwork :
 
         self.train_mean = X_train.mean(axis = 0)
         self.train_std = X_train.std(axis = 0)
-        normalized_X_train = np.divide(np.add(X_train, self.train_mean), self.train_std)
+        normalized_X_train = (X_train - self.train_mean) / self.train_std
         
 
         ## TODO
@@ -185,7 +186,7 @@ class NeuralNetwork :
             
             precision = np.linalg.norm(de_dw_tot)
             initialized = False
-            self.update_weights(k)
+            self.update_weights(1 / precision)
             k += 1
 
         #print(de_dw_tot)

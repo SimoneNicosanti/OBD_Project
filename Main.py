@@ -16,9 +16,9 @@ def main() :
 
     featuresNumber = X_train.shape[1]
     labelsNumber = len(np.unique(Y_train))
-    model = NeuralNetwork(1, featuresNumber, labelsNumber, 32)
+    model = NeuralNetwork(1, featuresNumber, labelsNumber, 128)
 
-    model.fit(X_train, Y_train, max_steps = 100, epsilon = 1e-3)
+    model.fit(X_train, Y_train, max_steps = 500, epsilon = 0)
     model.predict(X_test, Y_test)
 
 if __name__ == "__main__" :
