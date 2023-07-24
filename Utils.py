@@ -45,22 +45,12 @@ def datasetSplit(dataset : pd.DataFrame, targetName : str, testSetSize : float =
     X_valid, Y_valid = featuresMatrix[validationIndexes], labelsColumn[validationIndexes]
     X_test, Y_test = featuresMatrix[testIndexes], labelsColumn[testIndexes]
 
-    ## TODO Spostare la normalizzazione nella rete neurale?? Lei si deve mantenere media e varianza per poter fare la
-    ## Normalizzazione dei punti di cui viene chiesta la predizione
-    # X_max = X_train.max(axis=0)
-    # X_min = X_train.min(axis=0)
-
-    # X_train = (X_train - X_min)/(X_max-X_min)
-    # X_test = (X_test - X_min)/(X_max-X_min)
-
     return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
 def softmax(output : np.ndarray) -> np.ndarray :
-  #print(output - output.max())
   expon = np.power(np.e, output - output.max())
   return expon / np.sum(expon)
 
-## TODO Forse bisogna aggiungere un meno: rivedere formula
 def derivative_cross_entropy(output : np.ndarray) -> np.ndarray:
   return 1 - softmax(output)
 
@@ -71,5 +61,9 @@ def derivative_e_y(output : np.ndarray, labels : np.ndarray) -> np.ndarray:
   #return - labels + softmax(output)
   #return np.dot(labels, derivative_cross_entropy(output))
 
+# TODO : AdaGrad -> RMSProp -> Adadelta -> Adam -> Nadam
 def diminishing_stepsize(k : int) -> float:
   return 1 / (k + 10)
+
+def adaGrad_stepsize() -> float:
+  return 

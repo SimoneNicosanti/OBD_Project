@@ -29,22 +29,13 @@ class Layer :
     def forwardPropagation(self, input : np.ndarray = None) -> None :
         if (self.prevLayer == None) :
             self.outputArray = input
-            #print("dim input: ", input.shape)
         else :
             inputArray = self.prevLayer.getOutput()
-            #print("dim z: ", inputArray.shape)
-            #print("dim w: ", self.weightMatrix.shape)
-            #print("dim b:", self.biasArray.shape)
-
-            # TODO
-            # check dimensioni
-            #print("Matrice pesi", self.weightMatrix)
-            #print("Input", inputArray)
-            #print("Dimensioni", inputArray.shape)
-            self.aArray = np.dot(self.weightMatrix.T, inputArray) - self.biasArray
+            
+            self.aArray = np.dot(inputArray, self.weightMatrix) - self.biasArray
 
             if (self.nextLayer == None) :
-                self.outputArray = self.aArray ## Identity function
+                self.outputArray = self.aArray
             else :
                 self.outputArray = self.__relu(self.aArray)
 
@@ -68,7 +59,6 @@ class Layer :
         return 1 / (1 + np.power(np.e, -z_array))
 
     def __relu(self, z_array) -> np.ndarray :
-        #z_array = z_array / np.linalg.norm(z_array)
         return np.maximum(z_array, 0)
     
     def relu_derivative(self, z_array : np.ndarray) :
