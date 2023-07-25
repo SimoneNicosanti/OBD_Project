@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
 
 def train_test_split(X, y, test_size=0.3, random_state=None):
@@ -28,24 +27,11 @@ def train_test_split(X, y, test_size=0.3, random_state=None):
 
   return (X_train, X_test, y_train, y_test )
 
-def datasetSplit(dataset : pd.DataFrame, targetName : str, testSetSize : float = 0.2, validationSetSize : float = 0.2) :
-    
-    featuresMatrix = dataset.drop(targetName, axis=1).values 
-
-    # stelle
-    #featuresMatrix = dataset.drop(targetName, axis = 1)
-    #featuresMatrix = featuresMatrix.drop("obj_ID", axis = 1) # TODO : rimuovere ID per la classificazione di stelle
-    #featuresMatrix = featuresMatrix.drop("run_ID", axis = 1)
-    #featuresMatrix = featuresMatrix.drop("rerun_ID", axis = 1)
-    #featuresMatrix = featuresMatrix.drop("field_ID", axis = 1)
-    #featuresMatrix = featuresMatrix.drop("spec_obj_ID", axis = 1)
-    #featuresMatrix = featuresMatrix.drop("fiber_ID", axis = 1)
-    #featuresMatrix = featuresMatrix.values
-
-    # musica
-    #featuresMatrix = dataset.drop(targetName, axis = 1)
-    #featuresMatrix = (featuresMatrix.drop("Unnamed: 0", axis = 1)) # TODO : rimuovere Unnamed: 0 per la classificazione di canzoni
-    #featuresMatrix = featuresMatrix.values
+def datasetSplit(dataset : pd.DataFrame, targetName : str, targetDrop : list, targetOHE : list, testSetSize : float = 0.2, validationSetSize : float = 0.2) :
+    pre_processed_dataset = dataset.drop(targetName, axis = 1)
+    pre_processed_dataset = pre_processed_dataset.drop(targetDrop, axis = 1)
+    pre_processed_dataset = oneHotEncoding(pre_processed_dataset, targetOHE)
+    featuresMatrix = pre_processed_dataset.values
 
     labelsColumn = dataset[targetName].values
 
@@ -66,22 +52,16 @@ def datasetSplit(dataset : pd.DataFrame, targetName : str, testSetSize : float =
 
     return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
-def oneHotEncoding() :
-  data = ['cold', 'cold', 'warm', 'cold', 'hot', 'hot', 'warm', 'cold', 'warm', 'hot']
-  values = np.array(data)
-  print(values)
-  # integer encode
-  label_encoder = LabelEncoder()
-  integer_encoded = label_encoder.fit_transform(values)
-  print(integer_encoded)
-  # binary encode
-  onehot_encoder = OneHotEncoder(sparse=False)
-  integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
-  onehot_encoded = onehot_encoder.fit_transform(integer_encoded)
-  print(onehot_encoded)
-  # invert first example
-  inverted = label_encoder.inverse_transform([np.argmax(onehot_encoded[0, :])])
-  print(inverted)
+def oneHotEncoding(dataset : pd.DataFrame, column_names : list) -> pd.DataFrame :
+  for column_name in column_names :
+    encoder = OneHotEncoder(sparse=False)
+    encoded = pd.DataFrame(encoder.fit_transform(dataset[[column_name]]))
+    encoded.columns = encoder.get_feature_names_out([column_name])
+
+    dataset.drop([column_name], axis = 1, inplace = True)
+    dataset = pd.concat([dataset, encoded], axis = 1)
+  print(dataset)
+  return dataset
 
 # TODO : inserire Loss Function per la regressione
 def softmax(output : np.ndarray) -> np.ndarray :

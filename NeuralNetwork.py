@@ -158,8 +158,9 @@ class NeuralNetwork :
             self.reset_de_dw()
 
             # TODO : Stochastic Gradient Descent -> SAGA
-
+            # TODO : la letteratura dice che scegliere come dimensione del mini-batch un multiplo di 2 aiuta
             mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
+            #mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(256, len(normalized_X_train)))
             mini_batch_train = normalized_X_train[mini_batch_indexes]
             mini_batch_labels = Y_train[mini_batch_indexes]
 
@@ -197,4 +198,3 @@ class NeuralNetwork :
         #cartesian_plot(np.arange(0, k, 1), gradient_norm_array, "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
         writeAllNormLog(gradient_norm_array)
         return
-    

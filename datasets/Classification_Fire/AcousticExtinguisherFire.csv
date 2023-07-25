@@ -1,4 +1,4 @@
-size,fuel,distance,desibel,airflow,frequency,class
+﻿size,fuel,distance,desibel,airflow,frequency,class
 1,gasoline,10,96,0.0,75,0
 1,gasoline,10,96,0.0,72,1
 1,gasoline,10,96,2.6,70,1

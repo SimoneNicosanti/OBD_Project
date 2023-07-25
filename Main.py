@@ -11,32 +11,53 @@ def main() :
     #CSV_URL = "https://raw.githubusercontent.com/ProfAI/tutorials/master/Come%20Creare%20una%20Rete%20Neurale%20da%20Zero/breast_cancer.csv"
     #dataset = pd.read_csv(CSV_URL)
     #targetName = "malignant"
+    #targetDrop = []
+    #targetOHE = []
     #--------------------------------------------IMMAGINI-------------------------------------------------------#
-    #aggiungere + 1 alla std_dev
     #dataset = pd.read_csv("./datasets/Classification_Digits/train.csv")
     #dataset = dataset.groupby("label").head(100)
     #targetName = "label"
+    #targetDrop = []
+    #targetOHE = []
     #--------------------------------------------PISTACCHI------------------------------------------------------#
-    dataset = pd.read_csv("./datasets/Classification_Pistachio/pistachio.csv")
-    targetName = "Class"
+    #dataset = pd.read_csv("./datasets/Classification_Pistachio/pistachio.csv")
+    #targetName = "Class"
+    #targetDrop = []
+    #targetOHE = []
     #--------------------------------------------STELLE---------------------------------------------------------#
-    #rimuovere ID come feature
     #dataset = pd.read_csv("./datasets/Classification_Stars/stars.csv")
     #targetName = "class"
+    #targetDrop = ["obj_ID", "run_ID", "rerun_ID", "field_ID", "fiber_ID", "spec_obj_ID"]
+    #targetOHE = []
     #--------------------------------------------MUSICA---------------------------------------------------------#
     #dataset = pd.read_csv("./datasets/Classification_Music/songs.csv")
     #targetName = "labels"
+    #targetDrop = ["Unnamed: 0"]
+    #targetOHE = []
+    #--------------------------------------------TITANIC--------------------------------------------------------#
+    #dataset = pd.read_csv("./datasets/Classification_Titanic/Titanic.csv")
+    #targetName = "Survived"
+    #targetDrop = ["PassengerId"]
+    #targetOHE = ["Sex"]
+    #--------------------------------------------SPACESHIP-TITANIC----------------------------------------------#
+    #dataset = pd.read_csv("./datasets/Classification_SpaceshipTitanic/SpaceshipTitanic.csv")
+    #targetName = "Transported"
+    #targetDrop = ["PassengerId", "Cabin"]
+    #targetOHE = ["HomePlanet", "CryoSleep", "Destination", "VIP", "Grouped", "Deck", "Side", "Has_expenses", "Is_Embryo"]
+    #--------------------------------------------FIRE-----------------------------------------------------------#
+    #dataset = pd.read_csv("./datasets/Classification_Fire/AcousticExtinguisherFire.csv")
+    #targetName = "class"
+    #targetDrop = []
+    #targetOHE = ["fuel"]
     #-----------------------------------------------------------------------------------------------------------#
 
-    X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetSplit(dataset = dataset, targetName = targetName)
+    X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetSplit(dataset = dataset, targetName = targetName, targetDrop = targetDrop, targetOHE = targetOHE)
 
     featuresNumber = X_train.shape[1]
     labelsNumber = len(np.unique(Y_train))
     numberNeurons = int(2/3 * featuresNumber) + labelsNumber
     numberLayers = 2
     model = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons)
-
-    oneHotEncoding()
 
     print("Starting training with training set:")
     model.fit(X_train, Y_train, max_steps = 100, epsilon = 1e-12)
