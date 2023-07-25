@@ -211,8 +211,10 @@ class NeuralNetwork :
         
         de_dw_tot : np.ndarray = None
         accumulatorSAGA = np.zeros(X_train.shape[0])
+        initialized_saga_acc = False
         gradient_norm = epsilon
         gradient_norm_array = []
+        
         k = 0
         while (gradient_norm >= epsilon and k <= max_steps) :
             self.reset_de_dw()
@@ -226,22 +228,39 @@ class NeuralNetwork :
 
             self.do_forwarding(mini_batch_train)
 
-            i = np.random.choice(mini_batch_indexes)
+            sagaIndex = np.random.randint(0, len(mini_batch_indexes))
 
-            elemLabel = mini_batch_labels[i]
+            elemLabel = mini_batch_labels[sagaIndex]
             elemLabelsArray = (sortedLabels == elemLabel).astype(int)
 
-            de_dw : np.ndarray = self.backpropagation(elemLabelsArray, i)
+            de_dw : np.ndarray = self.backpropagation(elemLabelsArray, sagaIndex)
             
-            gradient = de_dw - (accumulatorSAGA[i] - accumulatorSAGA.mean())
+            gradient_esteem = de_dw - (accumulatorSAGA[sagaIndex] - accumulatorSAGA.mean(axis = 0))
 
-            gradient_norm = np.linalg.norm(gradient)
+            if (not initialized_saga_acc) :
+                accumulatorSAGA = np.zeros(shape = (X_train.shape[0], de_dw.shape[0]))
+                initialized_saga_acc = True
+
+            accumulatorSAGA[sagaIndex] = de_dw
+
+            gradient_norm = np.linalg.norm(gradient_esteem)
             gradient_norm_array.append(gradient_norm)
             print("Gradient's norm: ", gradient_norm, "--", "K: ", k)
-            k += 1
 
-            self.update_weights(1 / gradient_norm)
+            self.saga_update_weights(gradient_esteem, diminishing_stepsize(k))
+            k += 1
 
         #cartesian_plot(np.arange(0, k, 1), gradient_norm_array, "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
         writeAllNormLog(gradient_norm_array)
         return
+    
+
+    def saga_update_weights(self, gradient_esteem : np.ndarray, alpha : float) -> None :
+        layer = self.lastLayer
+        i = 0
+        start = 0
+        while (layer.prevLayer != None) :
+            layer.saga_update_weights(gradient_esteem, i, start, alpha)
+            i += 1
+            start = start + layer.neuronNumber * (layer.prevLayer.neuronNumber + 1)
+            layer = layer.prevLayer

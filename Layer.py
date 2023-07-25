@@ -49,6 +49,17 @@ class Layer :
     def update_weights(self, alpha : float) -> None :
         self.weightMatrix -= alpha * self.de_dw_matrix
         self.biasArray -= alpha * self.de_dw_bias
+
+    def saga_update_weights(self, gradient_esteem : np.ndarray, index : int, start : int, alpha : float) -> None :
+        end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+        esteem_subset : np.ndarray = gradient_esteem[start : end]
+        for j in range(0, self.neuronNumber) :
+            for i in range(0, self.prevLayer.neuronNumber + 1) :
+                gradient_esteem_elem = esteem_subset[j * (self.prevLayer.neuronNumber + 1) + i]
+                if (i == self.prevLayer.neuronNumber) :
+                    self.biasArray[j] -= alpha * gradient_esteem_elem
+                else :
+                    self.weightMatrix[i][j] -= alpha * gradient_esteem_elem
         
     def getOutput(self) -> np.ndarray :
         return self.outputArray
