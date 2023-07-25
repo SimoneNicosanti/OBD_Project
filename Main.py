@@ -1,5 +1,6 @@
 import pandas as pd
 from Utils import *
+from LogWriter import *
 from NeuralNetwork import NeuralNetwork
 
 
@@ -45,9 +46,10 @@ def main() :
     print("Training Accuracy: ", accuracy_trainining)
     print("Generalization Accuracy:", accuracy_generalization)
 
+    normDataFrame = pd.read_csv("./log/NormLog.csv")
+    cartesian_plot(normDataFrame["K"], normDataFrame["Norm"], "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
     bar_plot(["Training Accuracy", "Generalization Accuracy"], [accuracy_trainining, accuracy_generalization], "Type of accuracy", "Accuracy", "Bar plot for accuracies")
-
-    pie_plot([len(X_train), len(X_valid), len(X_test)], ["Training Set", "Validation Set", "Test Set"])
+    pie_plot([len(X_train), len(X_valid), len(X_test)], ["Training Set", "Validation Set", "Test Set"], "Ripartizione dataset")
 
 if __name__ == "__main__" :
     main()

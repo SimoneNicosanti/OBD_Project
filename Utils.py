@@ -83,28 +83,6 @@ def oneHotEncoding() :
   inverted = label_encoder.inverse_transform([np.argmax(onehot_encoded[0, :])])
   print(inverted)
 
-def cartesian_plot(x : list, y : list, x_label : str, y_label : str, title : str) -> None :
-  plt.plot(x,y)
-  plt.xlabel(x_label)
-  plt.ylabel(y_label)
-  plt.title(title)
-  plt.show()
-  return
-
-def bar_plot(x : list, y : list, x_label : str, y_label : str, title : str) -> None :
-  plt.bar(x, y, width = 0.6, color = ['red', 'black'])
-  plt.xlabel(x_label)
-  plt.ylabel(y_label)
-  plt.title(title)
-  plt.show()
-  return
-
-def pie_plot(x: list, y : list) -> None :
-  fig = plt.figure(figsize = (7, 7))
-  plt.pie(x, labels = y, autopct = '%1.1f%%')
-  plt.show()
-  return
-
 # TODO : inserire Loss Function per la regressione
 def softmax(output : np.ndarray) -> np.ndarray :
   expon = np.power(np.e, output - output.max())

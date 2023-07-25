@@ -1,5 +1,6 @@
 import numpy as np
 from Layer import Layer
+from LogWriter import *
 from Utils import *
 
 class NeuralNetwork :
@@ -193,7 +194,7 @@ class NeuralNetwork :
             #self.update_weights(1 / np.linalg.norm(np.sqrt(accumulator) + 1e-8))
             self.update_weights(1 / gradient_norm)
 
-        cartesian_plot(np.arange(0, k, 1), gradient_norm_array, "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
-
+        #cartesian_plot(np.arange(0, k, 1), gradient_norm_array, "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
+        writeAllNormLog(gradient_norm_array)
         return
     
