@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
 
 def train_test_split(X, y, test_size=0.3, random_state=None):
 
@@ -63,6 +65,23 @@ def datasetSplit(dataset : pd.DataFrame, targetName : str, testSetSize : float =
     X_test, Y_test = featuresMatrix[testIndexes], labelsColumn[testIndexes]
 
     return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
+
+def oneHotEncoding() :
+  data = ['cold', 'cold', 'warm', 'cold', 'hot', 'hot', 'warm', 'cold', 'warm', 'hot']
+  values = np.array(data)
+  print(values)
+  # integer encode
+  label_encoder = LabelEncoder()
+  integer_encoded = label_encoder.fit_transform(values)
+  print(integer_encoded)
+  # binary encode
+  onehot_encoder = OneHotEncoder(sparse=False)
+  integer_encoded = integer_encoded.reshape(len(integer_encoded), 1)
+  onehot_encoded = onehot_encoder.fit_transform(integer_encoded)
+  print(onehot_encoded)
+  # invert first example
+  inverted = label_encoder.inverse_transform([np.argmax(onehot_encoded[0, :])])
+  print(inverted)
 
 def cartesian_plot(x : list, y : list, x_label : str, y_label : str, title : str) -> None :
   plt.plot(x,y)

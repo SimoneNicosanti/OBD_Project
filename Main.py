@@ -35,6 +35,8 @@ def main() :
     numberLayers = 2
     model = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons)
 
+    oneHotEncoding()
+
     print("Starting training with training set:")
     model.fit(X_train, Y_train, max_steps = 100, epsilon = 1e-12)
 
