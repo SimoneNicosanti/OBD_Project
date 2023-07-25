@@ -198,3 +198,50 @@ class NeuralNetwork :
         #cartesian_plot(np.arange(0, k, 1), gradient_norm_array, "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
         writeAllNormLog(gradient_norm_array)
         return
+    
+    def fitSAGA(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) :
+
+        numpyLabels : np.ndarray = np.array(Y_train)
+        uniqueLables = np.unique(numpyLabels)
+        sortedLabels = np.sort(uniqueLables)
+
+        self.train_mean = X_train.mean(axis = 0)
+        self.train_std = X_train.std(axis = 0) + 1e-3
+        normalized_X_train = (X_train - self.train_mean) / self.train_std
+        
+        de_dw_tot : np.ndarray = None
+        accumulatorSAGA = np.zeros(X_train.shape[0])
+        gradient_norm = epsilon
+        gradient_norm_array = []
+        k = 0
+        while (gradient_norm >= epsilon and k <= max_steps) :
+            self.reset_de_dw()
+
+            # TODO : Stochastic Gradient Descent -> SAGA
+            # TODO : la letteratura dice che scegliere come dimensione del mini-batch un multiplo di 2 aiuta
+            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
+            #mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(256, len(normalized_X_train)))
+            mini_batch_train = normalized_X_train[mini_batch_indexes]
+            mini_batch_labels = Y_train[mini_batch_indexes]
+
+            self.do_forwarding(mini_batch_train)
+
+            i = np.random.choice(mini_batch_indexes)
+
+            elemLabel = mini_batch_labels[i]
+            elemLabelsArray = (sortedLabels == elemLabel).astype(int)
+
+            de_dw : np.ndarray = self.backpropagation(elemLabelsArray, i)
+            
+            gradient = de_dw - (accumulatorSAGA[i] - accumulatorSAGA.mean())
+
+            gradient_norm = np.linalg.norm(gradient)
+            gradient_norm_array.append(gradient_norm)
+            print("Gradient's norm: ", gradient_norm, "--", "K: ", k)
+            k += 1
+
+            self.update_weights(1 / gradient_norm)
+
+        #cartesian_plot(np.arange(0, k, 1), gradient_norm_array, "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
+        writeAllNormLog(gradient_norm_array)
+        return

@@ -45,10 +45,10 @@ def main() :
     #targetDrop = ["PassengerId", "Cabin"]
     #targetOHE = ["HomePlanet", "CryoSleep", "Destination", "VIP", "Grouped", "Deck", "Side", "Has_expenses", "Is_Embryo"]
     #--------------------------------------------FIRE-----------------------------------------------------------#
-    #dataset = pd.read_csv("./datasets/Classification_Fire/AcousticExtinguisherFire.csv")
-    #targetName = "class"
-    #targetDrop = []
-    #targetOHE = ["fuel"]
+    dataset = pd.read_csv("./datasets/Classification_Fire/AcousticExtinguisherFire.csv")
+    targetName = "class"
+    targetDrop = []
+    targetOHE = ["fuel"]
     #-----------------------------------------------------------------------------------------------------------#
 
     X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetSplit(dataset = dataset, targetName = targetName, targetDrop = targetDrop, targetOHE = targetOHE)
@@ -60,7 +60,7 @@ def main() :
     model = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons)
 
     print("Starting training with training set:")
-    model.fit(X_train, Y_train, max_steps = 100, epsilon = 1e-12)
+    model.fitSAGA(X_train, Y_train, max_steps = 100, epsilon = 1e-12)
 
     accuracy_trainining = model.predict(X_train, Y_train)
     accuracy_generalization = model.predict(X_test, Y_test)
