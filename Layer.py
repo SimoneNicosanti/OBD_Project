@@ -13,6 +13,7 @@ class Layer :
         self.de_dw_bias : np.ndarray = np.zeros(neuronNumber)
         self.aArray : np.ndarray = np.zeros(neuronNumber)
         self.outputArray : np.ndarray = np.zeros(neuronNumber)
+        self.adagradAccumulator : np.ndarray = None
 
     def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
         self.prevLayer = prevLayer
@@ -22,6 +23,7 @@ class Layer :
             self.weightMatrix = np.random.uniform(1e-5, 0.1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
             self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
             self.biasArray = np.random.uniform(-0.1, 0.1, self.getNeuronNumber())
+            self.adagradAccumulator = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
 
     def getNeuronNumber(self) -> int :
         return self.neuronNumber
@@ -56,6 +58,34 @@ class Layer :
         for j in range(0, self.neuronNumber) :
             for i in range(0, self.prevLayer.neuronNumber + 1) :
                 gradient_esteem_elem = esteem_subset[j * (self.prevLayer.neuronNumber + 1) + i]
+                if (i == self.prevLayer.neuronNumber) :
+                    self.biasArray[j] -= alpha * gradient_esteem_elem
+                else :
+                    self.weightMatrix[i][j] -= alpha * gradient_esteem_elem
+
+    def adaGrad_update_weights(self, gradient_esteem : np.ndarray, start : int) -> None :
+        end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+        esteem_subset : np.ndarray = gradient_esteem[start : end]
+        for j in range(0, self.neuronNumber) :
+            for i in range(0, self.prevLayer.neuronNumber + 1) :
+                index = j * (self.prevLayer.neuronNumber + 1) + i
+                gradient_esteem_elem = esteem_subset[index]
+                self.adagradAccumulator[index] += gradient_esteem_elem ** 2
+                alpha = 0.001 / (np.sqrt(self.adagradAccumulator[index]) + 1e-8)
+                if (i == self.prevLayer.neuronNumber) :
+                    self.biasArray[j] -= alpha * gradient_esteem_elem
+                else :
+                    self.weightMatrix[i][j] -= alpha * gradient_esteem_elem
+
+    def rmsProp_update_weights(self, gradient_esteem : np.ndarray, start : int) -> None :
+        end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+        esteem_subset : np.ndarray = gradient_esteem[start : end]
+        for j in range(0, self.neuronNumber) :
+            for i in range(0, self.prevLayer.neuronNumber + 1) :
+                index = j * (self.prevLayer.neuronNumber + 1) + i
+                gradient_esteem_elem = esteem_subset[index]
+                self.adagradAccumulator[index] = 0.9 * self.adagradAccumulator[index] + 0.1 * gradient_esteem_elem ** 2
+                alpha = 0.001 / (np.sqrt(self.adagradAccumulator[index]) + 1e-8)
                 if (i == self.prevLayer.neuronNumber) :
                     self.biasArray[j] -= alpha * gradient_esteem_elem
                 else :

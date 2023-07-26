@@ -3,7 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
 
-
 def datasetSplit(dataset : pd.DataFrame, targetName : str, targetDrop : list, targetOHE : list, testSetSize : float = 0.2, validationSetSize : float = 0.2) :
     pre_processed_dataset = dataset.drop(targetName, axis = 1)
     pre_processed_dataset = pre_processed_dataset.drop(targetDrop, axis = 1)
@@ -29,7 +28,6 @@ def datasetSplit(dataset : pd.DataFrame, targetName : str, targetDrop : list, ta
 
     return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
-
 def oneHotEncoding(dataset : pd.DataFrame, column_names : list) -> pd.DataFrame :
     for column_name in column_names :
       encoder = OneHotEncoder(sparse=False)
@@ -40,19 +38,20 @@ def oneHotEncoding(dataset : pd.DataFrame, column_names : list) -> pd.DataFrame 
       dataset = pd.concat([dataset, encoded], axis = 1)
     return dataset
 
+def squaredErrorFunction(output : np.ndarray, realValues : np.ndarray) -> np.ndarray :
+    return (np.linalg.norm(output - realValues)) ** 2
 
-# TODO : inserire Loss Function per la regressione
 def softmax(output : np.ndarray) -> np.ndarray :
     expon = np.power(np.e, output - output.max())
     return expon / np.sum(expon)
 
-
-def derivative_e_y(output : np.ndarray, labels : np.ndarray) -> np.ndarray:
-    return softmax(output) - labels
+def derivative_e_y(output : np.ndarray, realValues : np.ndarray, isClassification : bool) -> np.ndarray:
+    if (isClassification) :
+        return softmax(output) - realValues
+    else :
+        return 2 * (output - realValues)
 
 def diminishing_stepsize(k : int) -> float :
     return 1 / (k + 1)
 
 # TODO : AdaGrad -> RMSProp -> Adadelta -> Adam -> Nadam
-def adaGrad_stepsize() -> float:
-    pass 

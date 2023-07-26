@@ -5,12 +5,16 @@ from Utils import *
 
 class NeuralNetwork :
 
-    def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNum : int) -> None:
+    def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNum : int, isClassification : bool = True) -> None:
 
+        self.isClassification : bool = isClassification
         self.hiddenLayerNum = hiddenLayerNum
 
         self.firstLayer = Layer(inputDim)
-        self.lastLayer = Layer(outputDim)
+        if (self.isClassification) :
+            self.lastLayer = Layer(outputDim)
+        else :
+            self.lastLayer = Layer(1)
 
         self.train_mean : np.ndarray = None
         self.train_std : float = 1
@@ -50,18 +54,22 @@ class NeuralNetwork :
 
             elemLabel = Y_test[i]
 
-            elemLabelsArray : np.ndarray = (sortedLabels == elemLabel).astype(int)
-
             networkOutput = self.lastLayer.getOutput()
 
-            probs = softmax(networkOutput)
-            maxProbIndex = probs.argmax()
-            predictions = np.zeros(probs.shape)
-            predictions[maxProbIndex] = 1
+            if (self.isClassification) :
+                elemLabelsArray : np.ndarray = (sortedLabels == elemLabel).astype(int)
+                probs = softmax(networkOutput)
+                maxProbIndex = probs.argmax()
+                predictions = np.zeros(probs.shape)
+                predictions[maxProbIndex] = 1
 
-            realClassIndex = elemLabelsArray.argmax()
-            if (predictions[realClassIndex] == 1) :
-                accuracy += 1
+                realClassIndex = elemLabelsArray.argmax()
+                if (predictions[realClassIndex] == 1) :
+                    accuracy += 1
+            else :
+                predictions = networkOutput
+                elemLabelsArray = elemLabel
+                accuracy += squaredErrorFunction(predictions, elemLabelsArray)
 
             predictionArray.append([predictions, elemLabelsArray])
 
@@ -80,7 +88,6 @@ class NeuralNetwork :
             layer = layer.nextLayer
 
         return 
-    
 
     # TODO : ricontrollare algoritmo ed eventualmente implementarla per tutto il training set 
     def backpropagation(self, labels : np.ndarray, point_index : int) -> np.ndarray :
@@ -88,7 +95,7 @@ class NeuralNetwork :
 
         de_da = []
         de_dw = []
-        de_dy = derivative_e_y(layer.getOutput()[point_index], labels)
+        de_dy = derivative_e_y(layer.getOutput()[point_index], labels, self.isClassification)
         for j in range(0, layer.neuronNumber) :
             prev_layer : Layer = layer.prevLayer
             de_da.append(de_dy[j] * 1)
@@ -127,13 +134,6 @@ class NeuralNetwork :
             layer = layer.prevLayer
 
         return np.array(de_dw)
-    
-    def update_weights(self, alpha) :
-        layer : Layer = self.firstLayer.nextLayer
-        while layer != None :
-            layer.update_weights(alpha)
-            layer = layer.nextLayer
-
 
     def reset_de_dw(self) -> None :
         layer : Layer = self.firstLayer.nextLayer
@@ -160,8 +160,6 @@ class NeuralNetwork :
         normalized_X_train = (X_train - self.train_mean) / self.train_std
         
         de_dw_tot : np.ndarray = None
-        #accumulator = None
-        #initialized_accumulator = False
         initialized_de_dw = False
         gradient_norm = epsilon
         gradient_norm_array = []
@@ -178,7 +176,10 @@ class NeuralNetwork :
 
             for i in range(0, len(mini_batch_indexes)) :
                 elemLabel = mini_batch_labels[i]
-                elemLabelsArray = (sortedLabels == elemLabel).astype(int)
+                if (self.isClassification) :
+                    elemLabelsArray = (sortedLabels == elemLabel).astype(int)
+                else :
+                    elemLabelsArray = elemLabel
 
                 de_dw : np.ndarray = self.backpropagation(elemLabelsArray, i)
                 if (not initialized_de_dw) :
@@ -193,17 +194,9 @@ class NeuralNetwork :
             print("Gradient's norm: ", gradient_norm, "--", "K: ", k)
             k += 1
 
-            # TODO : ricontrollare algoritmo AdaGrad ed RMSProp
-            #if (not initialized_accumulator) :
-                #accumulator = de_dw_tot ** 2 #AdaGrad
-                #accumulator = (1 - 0.9) * de_dw_tot ** 2 #RMSProp
-            #else :
-                #accumulator += de_dw_tot ** 2 #AdaGrad
-                #accumulator = 0.9 * accumulator + (1 - 0.9) * de_dw_tot ** 2 #RMSProp
-                #initialized_accumulator = True
-
-            #self.update_weights(1 / np.linalg.norm(np.sqrt(accumulator) + 1e-8))
-            self.update_weights(1 / gradient_norm)
+            self.rmsProp_update_weights(de_dw_tot)
+            #self.update_weights(1 / gradient_norm)
+            #self.update_weights(diminishing_stepsize(k))
 
         writeAllNormLog(gradient_norm_array)
         return
@@ -228,7 +221,6 @@ class NeuralNetwork :
         while (gradient_norm >= epsilon and k <= max_steps) :
             self.reset_de_dw()
 
-            # TODO : Stochastic Gradient Descent -> SAGA
             # TODO : la letteratura dice che scegliere come dimensione del mini-batch un multiplo di 2 aiuta
             mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
             #mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(256, len(normalized_X_train)))
@@ -240,7 +232,10 @@ class NeuralNetwork :
             sagaIndex = np.random.randint(0, len(mini_batch_indexes))
 
             elemLabel = mini_batch_labels[sagaIndex]
-            elemLabelsArray = (sortedLabels == elemLabel).astype(int)
+            if (self.isClassification) :
+                elemLabelsArray = (sortedLabels == elemLabel).astype(int)
+            else :
+                elemLabelsArray = elemLabel
 
             de_dw : np.ndarray = self.backpropagation(elemLabelsArray, sagaIndex)
             
@@ -257,13 +252,19 @@ class NeuralNetwork :
             gradient_norm = np.linalg.norm(gradient_esteem)
             gradient_norm_array.append(gradient_norm)
             print("Gradient's norm: ", gradient_norm, "--", "K: ", k)
-
-            self.saga_update_weights(gradient_esteem, diminishing_stepsize(k))
             k += 1
+
+            #self.saga_update_weights(gradient_esteem, diminishing_stepsize(k))
+            self.rmsProp_update_weights(gradient_esteem)
             
         writeAllNormLog(gradient_norm_array)
         return
-    
+
+    def update_weights(self, alpha) :
+        layer : Layer = self.firstLayer.nextLayer
+        while layer != None :
+            layer.update_weights(alpha)
+            layer = layer.nextLayer
 
     def saga_update_weights(self, gradient_esteem : np.ndarray, alpha : float) -> None :
         layer = self.lastLayer
@@ -274,3 +275,26 @@ class NeuralNetwork :
             i += 1
             start = start + layer.neuronNumber * (layer.prevLayer.neuronNumber + 1)
             layer = layer.prevLayer
+        return
+    
+    def adaGrad_update_weights(self, gradient_esteem : np.ndarray) -> None :
+        layer = self.lastLayer
+        i = 0
+        start = 0
+        while (layer.prevLayer != None) :
+            layer.adaGrad_update_weights(gradient_esteem, start)
+            i += 1
+            start = start + layer.neuronNumber * (layer.prevLayer.neuronNumber + 1)
+            layer = layer.prevLayer
+        return
+    
+    def rmsProp_update_weights(self, gradient_esteem : np.ndarray) -> None :
+        layer = self.lastLayer
+        i = 0
+        start = 0
+        while (layer.prevLayer != None) :
+            layer.rmsProp_update_weights(gradient_esteem, start)
+            i += 1
+            start = start + layer.neuronNumber * (layer.prevLayer.neuronNumber + 1)
+            layer = layer.prevLayer
+        return
