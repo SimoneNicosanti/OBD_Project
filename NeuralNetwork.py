@@ -211,6 +211,7 @@ class NeuralNetwork :
         self.train_mean = X_train.mean(axis = 0)
         self.train_std = X_train.std(axis = 0) + 1e-3
         normalized_X_train = (X_train - self.train_mean) / self.train_std
+
         
         de_dw_tot : np.ndarray = None
         initialized_saga_acc = False

@@ -7,6 +7,8 @@ def datasetSplit(dataset : pd.DataFrame, targetName : str, targetDrop : list, ta
     pre_processed_dataset = dataset.drop(targetName, axis = 1)
     pre_processed_dataset = pre_processed_dataset.drop(targetDrop, axis = 1)
     pre_processed_dataset = oneHotEncoding(pre_processed_dataset, targetOHE)
+    pre_processed_dataset = pre_processed_dataset.dropna(axis = 0)
+    
     featuresMatrix = pre_processed_dataset.values
 
     labelsColumn = dataset[targetName].values
