@@ -5,28 +5,38 @@ import matplotlib.pyplot as plt
 def initLog() -> None :
     if (os.path.exists("./log/NormLog.csv")) :
         os.remove("./log/NormLog.csv")
-    
-
-def writeNormLog(k : int, norm : float) -> None :
-    if (not os.path.exists("./log/NormLog.csv")) :
-        with open("./log/NormLog.csv", "+x") as normLog :
-            csvWriter = csv.writer(normLog)
-            csvWriter.writerow(["K", "Norm"])
-    else :
-        with open("./log/NormLog.csv", "+a") as normLog :
-            csvWriter = csv.writer(normLog)
-            csvWriter.writerow([k, norm])
 
 
 def writeAllNormLog(logList : list) -> None :
-    if (not os.path.exists("./log/NormLog.csv")) :
-        with open("./log/NormLog.csv", "+x") as normLog :
+    filePath = "./log/NormLog.csv"
+    if (os.path.exists(filePath)) :
+        os.remove(filePath)
+
+    if (not os.path.exists(filePath)) :
+        with open(filePath, "+x") as normLog :
             csvWriter = csv.writer(normLog)
             csvWriter.writerow(["K", "Norm"])
-    with open("./log/NormLog.csv", "+a") as normLog :
+    with open(filePath, "+a") as normLog :
         csvWriter = csv.writer(normLog)
         for k in range(0, len(logList)) :
             csvWriter.writerow([k, logList[k]])
+
+
+def writeClassificationLog(fileName : str, classificationList : list) -> None :
+    filePath = "./log/" + fileName + ".csv"
+
+    if (os.path.exists(filePath)) :
+        os.remove(filePath)
+
+    if (not os.path.exists(filePath)) :
+        with open(filePath, "+x") as classificationLog :
+            csvWriter = csv.writer(classificationLog)
+            csvWriter.writerow(["Classified", "Real"])
+
+    with open(filePath, "+a") as classificationLog :
+        csvWriter = csv.writer(classificationLog)
+        for couple in classificationList :
+            csvWriter.writerow([str(couple[0]), str(couple[1])])
 
 
 def cartesian_plot(x : list, y : list, x_label : str, y_label : str, title : str) -> None :

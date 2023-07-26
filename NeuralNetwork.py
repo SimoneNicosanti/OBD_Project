@@ -33,10 +33,12 @@ class NeuralNetwork :
         return
 
 
-    def predict(self, X_test : np.ndarray, Y_test : np.ndarray) -> np.ndarray :
+    def predict(self, X_test : np.ndarray, Y_test : np.ndarray, logFileName : str) -> np.ndarray :
         numpyLabels : np.ndarray = np.array(Y_test)
         uniqueLables = np.unique(numpyLabels)
         sortedLabels = np.sort(uniqueLables)
+
+        predictionArray = []
 
         normalized_X_test = (X_test - self.train_mean) / self.train_std
         
@@ -61,9 +63,10 @@ class NeuralNetwork :
             if (predictions[realClassIndex] == 1) :
                 accuracy += 1
 
-            print(predictions, elemLabelsArray)
+            predictionArray.append([predictions, elemLabelsArray])
+
+        writeClassificationLog(logFileName, predictionArray)
         accuracy /= X_test.shape[0]
-        print(accuracy)
 
         return accuracy
     
@@ -99,6 +102,7 @@ class NeuralNetwork :
                     de_dw.append(de_da[j] * da_dw)
                     layer.de_dw_matrix[i][j] += de_da[j] * da_dw
 
+        
         layer = layer.prevLayer
 
         while layer.prevLayer != None :
@@ -106,6 +110,7 @@ class NeuralNetwork :
             next_layer : Layer = layer.nextLayer
             de_da_prev : np.ndarray = np.array(de_da)
             de_da = []
+            
             for j in range(0, layer.neuronNumber) :
                 dg = layer.relu_derivative(layer.aArray[point_index][j])
                 de_da.append(dg * np.dot(de_da_prev, next_layer.weightMatrix[j]))
@@ -137,7 +142,14 @@ class NeuralNetwork :
             layer = layer.nextLayer
 
 
-    def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) :
+    def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4, with_SAGA = False) -> None :
+        if (with_SAGA) :
+            self.__fit_saga(X_train, Y_train, epsilon, max_steps)
+        else :
+            self.__fit_dyn_sampl(X_train, Y_train, epsilon, max_steps)
+
+
+    def __fit_dyn_sampl(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) :
 
         numpyLabels : np.ndarray = np.array(Y_train)
         uniqueLables = np.unique(numpyLabels)
@@ -157,10 +169,8 @@ class NeuralNetwork :
         while (gradient_norm >= epsilon and k <= max_steps) :
             self.reset_de_dw()
 
-            # TODO : Stochastic Gradient Descent -> SAGA
             # TODO : la letteratura dice che scegliere come dimensione del mini-batch un multiplo di 2 aiuta
             mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
-            #mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(256, len(normalized_X_train)))
             mini_batch_train = normalized_X_train[mini_batch_indexes]
             mini_batch_labels = Y_train[mini_batch_indexes]
 
@@ -195,11 +205,11 @@ class NeuralNetwork :
             #self.update_weights(1 / np.linalg.norm(np.sqrt(accumulator) + 1e-8))
             self.update_weights(1 / gradient_norm)
 
-        #cartesian_plot(np.arange(0, k, 1), gradient_norm_array, "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
         writeAllNormLog(gradient_norm_array)
         return
     
-    def fitSAGA(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) :
+
+    def __fit_saga(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) :
 
         numpyLabels : np.ndarray = np.array(Y_train)
         uniqueLables = np.unique(numpyLabels)
@@ -210,7 +220,6 @@ class NeuralNetwork :
         normalized_X_train = (X_train - self.train_mean) / self.train_std
         
         de_dw_tot : np.ndarray = None
-        accumulatorSAGA = np.zeros(X_train.shape[0])
         initialized_saga_acc = False
         gradient_norm = epsilon
         gradient_norm_array = []
@@ -235,12 +244,14 @@ class NeuralNetwork :
 
             de_dw : np.ndarray = self.backpropagation(elemLabelsArray, sagaIndex)
             
-            gradient_esteem = de_dw - (accumulatorSAGA[sagaIndex] - accumulatorSAGA.mean(axis = 0))
-
             if (not initialized_saga_acc) :
-                accumulatorSAGA = np.zeros(shape = (X_train.shape[0], de_dw.shape[0]))
+                ## TODO Chiedere al prof se è lecita l'inizializzazione randomica oppure se bisogna fare un'inizializzazione a 0
+                #accumulatorSAGA = np.random.uniform(-1, 1, (X_train.shape[0], de_dw.shape[0]))
+                accumulatorSAGA = np.zeros((X_train.shape[0], de_dw.shape[0]))
                 initialized_saga_acc = True
-
+            
+            gradient_esteem = de_dw - (accumulatorSAGA[sagaIndex] - accumulatorSAGA.mean(axis = 0))
+            
             accumulatorSAGA[sagaIndex] = de_dw
 
             gradient_norm = np.linalg.norm(gradient_esteem)
@@ -249,8 +260,7 @@ class NeuralNetwork :
 
             self.saga_update_weights(gradient_esteem, diminishing_stepsize(k))
             k += 1
-
-        #cartesian_plot(np.arange(0, k, 1), gradient_norm_array, "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
+            
         writeAllNormLog(gradient_norm_array)
         return
     

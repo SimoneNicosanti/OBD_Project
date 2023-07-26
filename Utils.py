@@ -29,6 +29,7 @@ def datasetSplit(dataset : pd.DataFrame, targetName : str, targetDrop : list, ta
 
     return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
+
 def oneHotEncoding(dataset : pd.DataFrame, column_names : list) -> pd.DataFrame :
     for column_name in column_names :
       encoder = OneHotEncoder(sparse=False)
@@ -38,6 +39,7 @@ def oneHotEncoding(dataset : pd.DataFrame, column_names : list) -> pd.DataFrame 
       dataset.drop([column_name], axis = 1, inplace = True)
       dataset = pd.concat([dataset, encoded], axis = 1)
     return dataset
+
 
 # TODO : inserire Loss Function per la regressione
 def softmax(output : np.ndarray) -> np.ndarray :
