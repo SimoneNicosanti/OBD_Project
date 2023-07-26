@@ -9,7 +9,7 @@ from DatasetInfo import dataset_dict
 def main() :
     np.random.seed(123456)
 
-    dataset_info = dataset_dict["House"]
+    dataset_info = dataset_dict["Songs"]
     dataset = pd.read_csv(dataset_info["fileName"])
     targetName = dataset_info["targetName"]
     toDrop = dataset_info["toDrop"]
@@ -22,16 +22,16 @@ def main() :
     featuresNumber = X_train.shape[1]
     if (isClassification) :
         labelsNumber = len(np.unique(Y_train))
-        numberNeurons = int(2/3 * featuresNumber) + labelsNumber
     else :
         labelsNumber = 1
-        numberNeurons = 100
+    numberNeurons = int(2/3 * featuresNumber) + labelsNumber
+    #numberNeurons = 128
         
     numberLayers = 2
     model = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification = isClassification)
 
     print("Starting training with training set:")
-    model.fit(X_train, Y_train, max_steps = 100, epsilon = 1e-12, with_SAGA = False)
+    model.fit(X_train, Y_train, max_steps = 5000, epsilon = 1e-12, with_SAGA = True)
 
     accuracy_trainining = model.predict(X_train, Y_train, "training")
     accuracy_generalization = model.predict(X_test, Y_test, "generalization")

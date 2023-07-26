@@ -13,7 +13,10 @@ class Layer :
         self.de_dw_bias : np.ndarray = np.zeros(neuronNumber)
         self.aArray : np.ndarray = np.zeros(neuronNumber)
         self.outputArray : np.ndarray = np.zeros(neuronNumber)
-        self.adagradAccumulator : np.ndarray = None
+        self.adaGradAccumulator : np.ndarray = None
+        self.adamM : np.ndarray = None
+        self.adamV : np.ndarray = None
+        self.prevGradient : np.ndarray = None
 
     def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
         self.prevLayer = prevLayer
@@ -23,7 +26,10 @@ class Layer :
             self.weightMatrix = np.random.uniform(1e-5, 0.1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
             self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
             self.biasArray = np.random.uniform(-0.1, 0.1, self.getNeuronNumber())
-            self.adagradAccumulator = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+            self.adaGradAccumulator = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+            self.adamM = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+            self.adamV = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+            self.prevGradient = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
 
     def getNeuronNumber(self) -> int :
         return self.neuronNumber
@@ -63,33 +69,67 @@ class Layer :
                 else :
                     self.weightMatrix[i][j] -= alpha * gradient_esteem_elem
 
-    def adaGrad_update_weights(self, gradient_esteem : np.ndarray, start : int) -> None :
+    def adaGrad_update_weights(self, gradient_esteem : np.ndarray, start : int, learning_rate : float = 0.001) -> None :
         end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
         esteem_subset : np.ndarray = gradient_esteem[start : end]
         for j in range(0, self.neuronNumber) :
             for i in range(0, self.prevLayer.neuronNumber + 1) :
                 index = j * (self.prevLayer.neuronNumber + 1) + i
                 gradient_esteem_elem = esteem_subset[index]
-                self.adagradAccumulator[index] += gradient_esteem_elem ** 2
-                alpha = 0.001 / (np.sqrt(self.adagradAccumulator[index]) + 1e-8)
+                self.adaGradAccumulator[index] += gradient_esteem_elem ** 2
+                alpha = learning_rate / (np.sqrt(self.adaGradAccumulator[index]) + 1e-8)
                 if (i == self.prevLayer.neuronNumber) :
                     self.biasArray[j] -= alpha * gradient_esteem_elem
                 else :
                     self.weightMatrix[i][j] -= alpha * gradient_esteem_elem
 
-    def rmsProp_update_weights(self, gradient_esteem : np.ndarray, start : int) -> None :
+    def rmsProp_update_weights(self, gradient_esteem : np.ndarray, start : int, learning_rate : float = 0.001) -> None :
         end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
         esteem_subset : np.ndarray = gradient_esteem[start : end]
         for j in range(0, self.neuronNumber) :
             for i in range(0, self.prevLayer.neuronNumber + 1) :
                 index = j * (self.prevLayer.neuronNumber + 1) + i
                 gradient_esteem_elem = esteem_subset[index]
-                self.adagradAccumulator[index] = 0.9 * self.adagradAccumulator[index] + 0.1 * gradient_esteem_elem ** 2
-                alpha = 0.001 / (np.sqrt(self.adagradAccumulator[index]) + 1e-8)
+                self.adaGradAccumulator[index] = 0.9 * self.adaGradAccumulator[index] + 0.1 * gradient_esteem_elem ** 2
+                alpha = learning_rate / (np.sqrt(self.adaGradAccumulator[index]) + 1e-8)
                 if (i == self.prevLayer.neuronNumber) :
                     self.biasArray[j] -= alpha * gradient_esteem_elem
                 else :
                     self.weightMatrix[i][j] -= alpha * gradient_esteem_elem
+
+    def adam_update_weights(self, gradient_esteem : np.ndarray, start : int, k : int, learning_rate : float = 0.001, beta1 : float = 0.9, beta2 : float = 0.999) -> None :
+        end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+        esteem_subset : np.ndarray = gradient_esteem[start : end]
+        for j in range(0, self.neuronNumber) :
+            for i in range(0, self.prevLayer.neuronNumber + 1) :
+                index = j * (self.prevLayer.neuronNumber + 1) + i
+                gradient_esteem_elem = esteem_subset[index]
+                self.adamM[index] = beta1 * self.adamM[index] + (1 - beta1) * gradient_esteem_elem
+                self.adamV[index] = beta2 * self.adamV[index] + (1 - beta2) * gradient_esteem_elem ** 2
+                m_hat = self.adamM[index] / (1 - beta1 ** k)
+                v_hat = self.adamV[index] / (1 - beta2 ** k)
+                if (i == self.prevLayer.neuronNumber) :
+                    self.biasArray[j] -= learning_rate * m_hat / (np.sqrt(v_hat) + 1e-8)
+                else :
+                    self.weightMatrix[i][j] -= learning_rate * m_hat / (np.sqrt(v_hat) + 1e-8)
+
+    def nadam_update_weights(self, gradient_esteem : np.ndarray, start : int, k : int, learning_rate : float = 0.001, beta1 : float = 0.9, beta2 : float = 0.999, gamma : float = 0.999) -> None :
+        end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+        esteem_subset : np.ndarray = gradient_esteem[start : end]
+        for j in range(0, self.neuronNumber) :
+            for i in range(0, self.prevLayer.neuronNumber + 1) :
+                index = j * (self.prevLayer.neuronNumber + 1) + i
+                gradient_esteem_elem = esteem_subset[index]
+                self.adamM[index] = beta1 * self.adamM[index] + (1 - beta1) * gradient_esteem_elem
+                self.adamV[index] = beta2 * self.adamV[index] + (1 - beta2) * gradient_esteem_elem ** 2
+                m_hat = self.adamM[index] / (1 - beta1 ** k)
+                v_hat = self.adamV[index] / (1 - beta2 ** k)
+                nesterov = (1 - gamma) * gradient_esteem_elem + gamma * self.prevGradient[index]
+                if (i == self.prevLayer.neuronNumber) :
+                    self.biasArray[j] -= learning_rate * (m_hat + gamma * nesterov) / (np.sqrt(v_hat) + 1e-8)
+                else :
+                    self.weightMatrix[i][j] -= learning_rate * (m_hat + gamma * nesterov) / (np.sqrt(v_hat) + 1e-8)
+                self.prevGradient[index] = gradient_esteem_elem
         
     def getOutput(self) -> np.ndarray :
         return self.outputArray

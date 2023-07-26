@@ -11,10 +11,7 @@ class NeuralNetwork :
         self.hiddenLayerNum = hiddenLayerNum
 
         self.firstLayer = Layer(inputDim)
-        if (self.isClassification) :
-            self.lastLayer = Layer(outputDim)
-        else :
-            self.lastLayer = Layer(1)
+        self.lastLayer = Layer(outputDim)
 
         self.train_mean : np.ndarray = None
         self.train_std : float = 1
@@ -194,7 +191,9 @@ class NeuralNetwork :
             print("Gradient's norm: ", gradient_norm, "--", "K: ", k)
             k += 1
 
-            self.rmsProp_update_weights(de_dw_tot)
+            #self.rmsProp_update_weights(de_dw_tot)
+            #self.adam_update_weights(de_dw_tot, k)
+            self.nadam_update_weights(de_dw_tot, k)
             #self.update_weights(1 / gradient_norm)
             #self.update_weights(diminishing_stepsize(k))
 
@@ -256,7 +255,10 @@ class NeuralNetwork :
             k += 1
 
             #self.saga_update_weights(gradient_esteem, diminishing_stepsize(k))
-            self.rmsProp_update_weights(gradient_esteem)
+            #self.rmsProp_update_weights(gradient_esteem)
+            #self.adam_update_weights(gradient_esteem, k)
+            self.nadam_update_weights(gradient_esteem, k)
+
             
         writeAllNormLog(gradient_norm_array)
         return
@@ -295,6 +297,28 @@ class NeuralNetwork :
         start = 0
         while (layer.prevLayer != None) :
             layer.rmsProp_update_weights(gradient_esteem, start)
+            i += 1
+            start = start + layer.neuronNumber * (layer.prevLayer.neuronNumber + 1)
+            layer = layer.prevLayer
+        return
+    
+    def adam_update_weights(self, gradient_esteem : np.ndarray, k : int) -> None :
+        layer = self.lastLayer
+        i = 0
+        start = 0
+        while (layer.prevLayer != None) :
+            layer.adam_update_weights(gradient_esteem, start, k)
+            i += 1
+            start = start + layer.neuronNumber * (layer.prevLayer.neuronNumber + 1)
+            layer = layer.prevLayer
+        return
+
+    def nadam_update_weights(self, gradient_esteem : np.ndarray, k : int) -> None :
+        layer = self.lastLayer
+        i = 0
+        start = 0
+        while (layer.prevLayer != None) :
+            layer.nadam_update_weights(gradient_esteem, start, k)
             i += 1
             start = start + layer.neuronNumber * (layer.prevLayer.neuronNumber + 1)
             layer = layer.prevLayer
