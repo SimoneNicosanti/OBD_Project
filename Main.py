@@ -3,13 +3,13 @@ from Utils import *
 from LogWriter import *
 from NeuralNetwork import NeuralNetwork
 from DatasetInfo import dataset_dict
-
-
+from StepEnum import *
+from CrossValidator import *
 
 def main() :
     np.random.seed(123456)
 
-    dataset_name = "Students"
+    dataset_name = "Cancer"
 
     dataset_info = dataset_dict[dataset_name]
     dataset = pd.read_csv(dataset_info["fileName"])
@@ -26,23 +26,28 @@ def main() :
         labelsNumber = len(np.unique(Y_train))
     else :
         labelsNumber = 1
-    numberNeurons = int(2/3 * featuresNumber) + labelsNumber
+    
+    crossValidate(isClassification, [2, 3], X_train, Y_train, X_valid, Y_valid)
+    return
+
+    numberLayers = 2
+    numberNeurons = [int(2/3 * featuresNumber) + labelsNumber] * numberLayers
     #numberNeurons = 128
         
-    numberLayers = 2
-    model = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification = isClassification)
+    method = StepEnum.NADAM
+    model = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method)
 
     print("Starting training with training set:")
-    max_steps = 10_000
+    max_steps = 100
     with_SAGA = True
     model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
 
-    accuracy_trainining, trainingPredictionArray = model.predict(X_train, Y_train, "training")
-    accuracy_generalization, generalizationPredictionArray = model.predict(X_test, Y_test, "generalization")
+    accuracy_trainining, trainingPredictionArray = model.predict(X_train, Y_train)
+    accuracy_generalization, generalizationPredictionArray = model.predict(X_test, Y_test)
     writeClassificationLog("Training", dataset_name, trainingPredictionArray)
     writeClassificationLog("Generalization", dataset_name, generalizationPredictionArray)
-    writeAccuracyLog("Training", dataset_name, accuracy_trainining, max_steps, with_SAGA)
-    writeAccuracyLog("Generalization", dataset_name, accuracy_generalization, max_steps, with_SAGA)
+    writeAccuracyLog("Training", dataset_name, accuracy_trainining, max_steps, with_SAGA, method)
+    writeAccuracyLog("Generalization", dataset_name, accuracy_generalization, max_steps, with_SAGA, method)
 
     print("Training Accuracy: ", accuracy_trainining)
     print("Generalization Accuracy:", accuracy_generalization)

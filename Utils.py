@@ -55,5 +55,3 @@ def derivative_e_y(output : np.ndarray, realValues : np.ndarray, isClassificatio
 
 def diminishing_stepsize(k : int) -> float :
     return 1 / (k + 1)
-
-# TODO : AdaGrad -> RMSProp -> Adadelta -> Adam -> Nadam
