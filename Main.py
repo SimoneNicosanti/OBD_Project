@@ -17,25 +17,14 @@ def main() :
     toDrop = dataset_info["toDrop"]
     toOHE = dataset_info["toOHE"]
     isClassification = dataset_info["classification"]
-    
 
     X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetSplit(dataset = dataset, targetName = targetName, targetDrop = toDrop, targetOHE = toOHE)
-
-    featuresNumber = X_train.shape[1]
-    if (isClassification) :
-        labelsNumber = len(np.unique(Y_train))
-    else :
-        labelsNumber = 1
     
-    crossValidate(isClassification, [2, 3], X_train, Y_train, X_valid, Y_valid)
-    return
-
-    numberLayers = 2
-    numberNeurons = [int(2/3 * featuresNumber) + labelsNumber] * numberLayers
-    #numberNeurons = 128
-        
+    layerNumArray : list = [2, 3]
+    neuronNumArray : list = [32, 64, 128]
+    crossValidation = False
     method = StepEnum.NADAM
-    model = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method)
+    model = crossValidate(isClassification, layerNumArray, neuronNumArray, X_train, Y_train, X_valid, Y_valid, crossValidation = crossValidation)
 
     print("Starting training with training set:")
     max_steps = 100

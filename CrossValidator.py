@@ -2,10 +2,7 @@ from NeuralNetwork import NeuralNetwork
 import numpy as np
 
 # TODO : Cross Validation con thread
-def crossValidate(isClassification : bool, layerNumArray : list, X_train, Y_train, X_valid, Y_valid) -> NeuralNetwork :
-
-    #lambdaArray : np.ndarray = np.arange(start = 0.1, stop = 5, step = 0.5)
-    neuronNumArray : list = [32, 64, 128]
+def crossValidate(isClassification : bool, layerNumArray : list, neuronNumArray : list, X_train, Y_train, X_valid, Y_valid, crossValidation : bool = False) -> NeuralNetwork :
 
     featuresNumber = X_train.shape[1]
     if (isClassification) :
@@ -16,6 +13,12 @@ def crossValidate(isClassification : bool, layerNumArray : list, X_train, Y_trai
     magicNeuronNum : int = int(2/3 * featuresNumber) + labelsNumber
     if (magicNeuronNum not in neuronNumArray) :
         neuronNumArray.append(magicNeuronNum)
+
+    if (not crossValidation) :
+        numberLayers = 2
+        numberNeurons = [magicNeuronNum] * numberLayers
+        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification)
+        return model
 
     max_steps = 100
     with_SAGA = True
