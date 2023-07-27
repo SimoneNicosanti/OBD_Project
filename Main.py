@@ -21,15 +21,26 @@ def main() :
     X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetSplit(dataset = dataset, targetName = targetName, targetDrop = toDrop, targetOHE = toOHE)
     
     layerNumArray : list = [2, 3]
-    neuronNumArray : list = [32, 64, 128]
-    crossValidation = False
+    neuronNumArray : list = [32, 64, 128, 256]
+    crossValidation = True
     method = StepEnum.NADAM
-    model = crossValidate(isClassification, layerNumArray, neuronNumArray, X_train, Y_train, X_valid, Y_valid, crossValidation = crossValidation)
-
-    print("Starting training with training set:")
     max_steps = 100
     with_SAGA = True
-    model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
+    model = crossValidate_thread(
+        isClassification, 
+        layerNumArray, 
+        neuronNumArray, 
+        X_train, 
+        Y_train, 
+        X_valid, 
+        Y_valid,
+        max_steps,
+        with_SAGA,
+        method,
+        crossValidation = crossValidation
+    )
+
+    #model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
 
     accuracy_trainining, trainingPredictionArray = model.predict(X_train, Y_train)
     accuracy_generalization, generalizationPredictionArray = model.predict(X_test, Y_test)

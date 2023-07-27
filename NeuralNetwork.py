@@ -58,6 +58,7 @@ class NeuralNetwork :
 
         normalized_X_test = (X_test - self.train_mean) / self.train_std
 
+        ## TODO Controllare per concorrenza
         if (not self.isClassification) :
             Y_test = (Y_test - self.train_y_mean) / self.train_y_std
         
@@ -198,7 +199,8 @@ class NeuralNetwork :
 
             self.update_weights(de_dw_tot, k)
 
-        writeAllNormLog(gradient_norm_array)
+        ## TODO Attenzione concorrenza dei thread
+        #writeAllNormLog(gradient_norm_array)
         return
     
 
@@ -255,7 +257,7 @@ class NeuralNetwork :
 
             self.update_weights(gradient_esteem, k)
 
-        writeAllNormLog(gradient_norm_array)
+        #writeAllNormLog(gradient_norm_array)
         return
 
     def update_weights(self, gradient_esteem : np.ndarray, k : int) -> None :
