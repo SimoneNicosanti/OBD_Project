@@ -25,7 +25,8 @@ class Layer :
         if (prevLayer != None) :
             self.weightMatrix = np.random.uniform(1e-5, 0.1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
             self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
-            self.biasArray = np.random.uniform(-0.1, 0.1, self.getNeuronNumber())
+            #self.biasArray = np.random.uniform(-0.1, 0.1, self.getNeuronNumber())
+            self.biasArray = np.zeros(self.getNeuronNumber())
             self.adaGradAccumulator = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
             self.adamM = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
             self.adamV = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))

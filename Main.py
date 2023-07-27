@@ -9,7 +9,9 @@ from DatasetInfo import dataset_dict
 def main() :
     np.random.seed(123456)
 
-    dataset_info = dataset_dict["Songs"]
+    dataset_name = "Students"
+
+    dataset_info = dataset_dict[dataset_name]
     dataset = pd.read_csv(dataset_info["fileName"])
     targetName = dataset_info["targetName"]
     toDrop = dataset_info["toDrop"]
@@ -31,17 +33,24 @@ def main() :
     model = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification = isClassification)
 
     print("Starting training with training set:")
-    model.fit(X_train, Y_train, max_steps = 5000, epsilon = 1e-12, with_SAGA = True)
+    max_steps = 10_000
+    with_SAGA = True
+    model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
 
-    accuracy_trainining = model.predict(X_train, Y_train, "training")
-    accuracy_generalization = model.predict(X_test, Y_test, "generalization")
+    accuracy_trainining, trainingPredictionArray = model.predict(X_train, Y_train, "training")
+    accuracy_generalization, generalizationPredictionArray = model.predict(X_test, Y_test, "generalization")
+    writeClassificationLog("Training", dataset_name, trainingPredictionArray)
+    writeClassificationLog("Generalization", dataset_name, generalizationPredictionArray)
+    writeAccuracyLog("Training", dataset_name, accuracy_trainining, max_steps, with_SAGA)
+    writeAccuracyLog("Generalization", dataset_name, accuracy_generalization, max_steps, with_SAGA)
+
     print("Training Accuracy: ", accuracy_trainining)
     print("Generalization Accuracy:", accuracy_generalization)
 
-    # normDataFrame = pd.read_csv("./log/NormLog.csv")
-    # cartesian_plot(normDataFrame["K"], normDataFrame["Norm"], "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
-    # bar_plot(["Training Accuracy", "Generalization Accuracy"], [accuracy_trainining, accuracy_generalization], "Type of accuracy", "Accuracy", "Bar plot for accuracies")
-    # pie_plot([len(X_train), len(X_valid), len(X_test)], ["Training Set", "Validation Set", "Test Set"], "Ripartizione dataset")
+    normDataFrame = pd.read_csv("./log/NormLog.csv")
+    cartesian_plot(normDataFrame["K"], normDataFrame["Norm"], "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
+    bar_plot(["Training Accuracy", "Generalization Accuracy"], [accuracy_trainining, accuracy_generalization], "Type of accuracy", "Accuracy", "Bar plot for accuracies")
+    pie_plot([len(X_train), len(X_valid), len(X_test)], ["Training Set", "Validation Set", "Test Set"], "Ripartizione dataset")
 
 if __name__ == "__main__" :
     main()

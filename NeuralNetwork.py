@@ -6,7 +6,7 @@ from Utils import *
 class NeuralNetwork :
 
     def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNum : int, isClassification : bool = True) -> None:
-
+    
         self.isClassification : bool = isClassification
         self.hiddenLayerNum = hiddenLayerNum
 
@@ -15,6 +15,9 @@ class NeuralNetwork :
 
         self.train_mean : np.ndarray = None
         self.train_std : float = 1
+
+        self.train_y_mean : float = 0.0
+        self.train_y_std : float = 1.0
   
         prevLayer = None
         currLayer = self.firstLayer
@@ -42,6 +45,9 @@ class NeuralNetwork :
         predictionArray = []
 
         normalized_X_test = (X_test - self.train_mean) / self.train_std
+
+        if (not self.isClassification) :
+            Y_test = (Y_test - self.train_y_mean) / self.train_y_std
         
         accuracy = 0
 
@@ -64,16 +70,16 @@ class NeuralNetwork :
                 if (predictions[realClassIndex] == 1) :
                     accuracy += 1
             else :
-                predictions = networkOutput
-                elemLabelsArray = elemLabel
+                predictions = networkOutput * self.train_y_std + self.train_y_mean
+                elemLabelsArray = elemLabel * self.train_y_std + self.train_y_mean
                 accuracy += squaredErrorFunction(predictions, elemLabelsArray)
 
             predictionArray.append([predictions, elemLabelsArray])
 
-        writeClassificationLog(logFileName, predictionArray)
+        #writeClassificationLog(logFileName, predictionArray)
         accuracy /= X_test.shape[0]
 
-        return accuracy
+        return accuracy, predictionArray
     
     def do_forwarding(self, input) :
         layer : Layer = self.firstLayer
@@ -140,6 +146,7 @@ class NeuralNetwork :
 
 
     def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4, with_SAGA = False) -> None :
+        ## TODO Per problemi di regressione bisogna normalizzare anche la parte Y?? Per ora aggiunto ma potrebbe sballare i valori
         if (with_SAGA) :
             self.__fit_saga(X_train, Y_train, epsilon, max_steps)
         else :
@@ -211,6 +218,10 @@ class NeuralNetwork :
         self.train_std = X_train.std(axis = 0) + 1e-3
         normalized_X_train = (X_train - self.train_mean) / self.train_std
 
+        if (not self.isClassification) :
+            self.train_y_mean = Y_train.mean(axis = 0)
+            self.train_y_std = Y_train.std(axis = 0)
+            Y_train = (Y_train - self.train_y_mean) / self.train_y_std
         
         de_dw_tot : np.ndarray = None
         initialized_saga_acc = False
