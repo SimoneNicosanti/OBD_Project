@@ -54,4 +54,4 @@ def derivative_e_y(output : np.ndarray, realValues : np.ndarray, isClassificatio
         return 2 * (output - realValues)
 
 def diminishing_stepsize(k : int) -> float :
-    return 1 / (k + 1)
+    return 0.001 / (k + 1)

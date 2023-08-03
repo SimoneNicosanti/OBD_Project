@@ -132,11 +132,11 @@ def train_test_split(X, y, test_size=0.3, random_state=None):
 
 def main() :
 
-    CSV_URL = "https://raw.githubusercontent.com/ProfAI/tutorials/master/Come%20Creare%20una%20Rete%20Neurale%20da%20Zero/breast_cancer.csv"
+    CSV_URL = "./datasets/Classification_Pistachio/pistachio.csv"
 
     breast_cancer = pd.read_csv(CSV_URL)
-    X = breast_cancer.drop("malignant", axis=1).values
-    y = breast_cancer["malignant"].values
+    X = breast_cancer.drop("Class", axis=1).values
+    y = breast_cancer["Class"].values
 
     X_train, X_test, y_train, y_test  = train_test_split(X, y, test_size=0.3)
 

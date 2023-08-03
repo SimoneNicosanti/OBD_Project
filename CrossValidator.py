@@ -3,8 +3,9 @@ from StepEnum import *
 import numpy as np
 from threading import *
 import time
+from LogWriter import *
 
-# TODO : Cross Validation con thread
+
 def crossValidate(
         isClassification : bool, 
         layerNumArray : list, 
@@ -35,7 +36,8 @@ def crossValidate(
         numberLayers = 2
         numberNeurons = [magicNeuronNum] * numberLayers
         model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method)
-        model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
+        gradient_norm_array = model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
+        writeAllNormLog(gradient_norm_array)
         return model
 
     total_combinations : list = generate_combinations(neuronNumArray, layerNumArray)
@@ -48,11 +50,12 @@ def crossValidate(
     for i in range(0, len(total_combinations)) :
         numberNeurons = total_combinations[i]
         numberLayers = len(numberNeurons)
+        print("Model: ", numberNeurons)
         model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification)
         model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA) 
         accuracy_validation, _ = model.predict(X_valid, Y_valid)
 
-        print("Model: ", numberLayers, numberNeurons, accuracy_validation)
+        print("Model: ", numberNeurons, accuracy_validation)
 
         if (accuracy_validation >= best_accuracy) :
             best_accuracy = accuracy_validation
@@ -107,12 +110,11 @@ def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNu
         thread_slices.append([])
     for i in range(0, len(total_combinations)) :
         thread_slices[i % thread_num].append(total_combinations[i])
-    print(thread_slices)
 
     thread_array : list[Thread] = [None] * thread_num
     for thread_index in range(0, thread_num) :
         thread_slice = thread_slices[thread_index]
-        thread_array[thread_index] = Thread(target = thread_cross_validation, args = [X_train, Y_train, X_valid, Y_valid, featuresNumber, labelsNumber, isClassification, max_steps, with_SAGA, thread_index, thread_slice, thread_best_model_list])
+        thread_array[thread_index] = Thread(target = thread_function, args = [X_train, Y_train, X_valid, Y_valid, featuresNumber, labelsNumber, isClassification, max_steps, with_SAGA, thread_index, thread_slice, thread_best_model_list])
         thread_array[thread_index].start()
 
     start = time.time()
@@ -153,7 +155,7 @@ def generate_combinations_rec(neuronNumArray, current_layers, current_combinatio
         for neurons in neuronNumArray:
             generate_combinations_rec(neuronNumArray, current_layers - 1, current_combination + [neurons], layer_combinations)
 
-def thread_cross_validation(
+def thread_function(
         X_train : np.ndarray, 
         Y_train : np.ndarray,
         X_valid : np.ndarray,

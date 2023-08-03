@@ -66,6 +66,7 @@ class Layer :
         dz[z_array > 0] = 1
         return dz
 
+
 class AdaGradLayer(Layer) :
     def __init__(self, neuronNumber : int) -> None :
         super().__init__(neuronNumber)
@@ -91,6 +92,7 @@ class AdaGradLayer(Layer) :
                 else :
                     self.weightMatrix[i][j] -= alpha * gradient_esteem_elem
 
+
 class RMSPropLayer(Layer) :
     def __init__(self, neuronNumber : int) -> None :
         super().__init__(neuronNumber)
@@ -115,6 +117,7 @@ class RMSPropLayer(Layer) :
                     self.biasArray[j] -= alpha * gradient_esteem_elem
                 else :
                     self.weightMatrix[i][j] -= alpha * gradient_esteem_elem
+
 
 class AdamLayer(Layer) :
     def __init__(self, neuronNumber : int) -> None :
@@ -145,6 +148,7 @@ class AdamLayer(Layer) :
                 else :
                     self.weightMatrix[i][j] -= learning_rate * m_hat / (np.sqrt(v_hat) + 1e-8)
 
+
 class NadamLayer(Layer) :
     def __init__(self, neuronNumber : int) -> None :
         super().__init__(neuronNumber)
@@ -167,6 +171,8 @@ class NadamLayer(Layer) :
             for i in range(0, self.prevLayer.neuronNumber + 1) :
                 index = j * (self.prevLayer.neuronNumber + 1) + i
                 gradient_esteem_elem = esteem_subset[index]
+                # if (i != self.prevLayer.neuronNumber) :
+                #     gradient_esteem_elem += 0.001 * self.weightMatrix[i][j]
                 self.adamM[index] = beta1 * self.adamM[index] + (1 - beta1) * gradient_esteem_elem
                 self.adamV[index] = beta2 * self.adamV[index] + (1 - beta2) * gradient_esteem_elem ** 2
                 m_hat = self.adamM[index] / (1 - beta1 ** k)

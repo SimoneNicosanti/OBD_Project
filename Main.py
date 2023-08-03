@@ -9,11 +9,12 @@ from CrossValidator import *
 def main() :
     np.random.seed(123456)
 
-    dataset_name = "Cancer"
+    dataset_name = "Songs"
 
     dataset_info = dataset_dict[dataset_name]
     dataset = pd.read_csv(dataset_info["fileName"])
     targetName = dataset_info["targetName"]
+    #dataset["Platform"] = dataset["Cabin"].str.slice(0,1)
     toDrop = dataset_info["toDrop"]
     toOHE = dataset_info["toOHE"]
     isClassification = dataset_info["classification"]
@@ -21,12 +22,12 @@ def main() :
     X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetSplit(dataset = dataset, targetName = targetName, targetDrop = toDrop, targetOHE = toOHE)
     
     layerNumArray : list = [2, 3]
-    neuronNumArray : list = [32, 64, 128, 256]
-    crossValidation = True
+    neuronNumArray : list = [32, 64, 128]
+    crossValidation = False
     method = StepEnum.NADAM
-    max_steps = 100
+    max_steps = 10_000
     with_SAGA = True
-    model = crossValidate_thread(
+    model = crossValidate(
         isClassification, 
         layerNumArray, 
         neuronNumArray, 

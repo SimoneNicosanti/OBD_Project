@@ -27,6 +27,9 @@ def writeClassificationLog(file_name : str, dataset_name : str, resultsList : li
         os.mkdir(mainDirectoryPath)
     
     filePath = mainDirectoryPath + "/" + file_name + "_Results.csv"
+    if (os.path.exists(filePath)) :
+        os.remove(filePath)
+        
     if (not os.path.exists(filePath)) :
         with open(filePath, "+x") as logFile :
             csvWriter = csv.writer(logFile)
@@ -49,8 +52,8 @@ def writeAccuracyLog(file_name : str, dataset_name : str, accuracy : float, step
             csvWriter.writerow(["Accuracy", "StepsNum", "SAGA", "Method"])
     
     with open(filePath, "+a") as logFile :
-            csvWriter = csv.writer(logFile)
-            csvWriter.writerow([accuracy, steps_num, with_saga, method.name])
+        csvWriter = csv.writer(logFile)
+        csvWriter.writerow([accuracy, steps_num, with_saga, method.name])
 
 def cartesian_plot(x : list, y : list, x_label : str, y_label : str, title : str) -> None :
     plt.figure(figsize = (50, 9), tight_layout = True)
