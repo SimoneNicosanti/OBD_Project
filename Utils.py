@@ -43,6 +43,7 @@ def oneHotEncoding(dataset : pd.DataFrame, column_names : list) -> pd.DataFrame 
 def squaredErrorFunction(output : np.ndarray, realValues : np.ndarray) -> np.ndarray :
     return (np.linalg.norm(output - realValues)) ** 2
 
+## TODO Unificare le implementazioni
 def softmax(output : np.ndarray) -> np.ndarray :
     expon = np.power(np.e, output - output.max())
     return expon / np.sum(expon)
@@ -50,6 +51,16 @@ def softmax(output : np.ndarray) -> np.ndarray :
 def derivative_e_y(output : np.ndarray, realValues : np.ndarray, isClassification : bool) -> np.ndarray:
     if (isClassification) :
         return softmax(output) - realValues
+    else :
+        return 2 * (output - realValues)
+    
+def softmax_2(output : np.ndarray) -> np.ndarray :
+    expon = np.power(np.e, output - output.max(axis = 1, keepdims = True))
+    return expon / np.sum(expon, axis = 1, keepdims = True)
+    
+def derivative_e_y_2(output : np.ndarray, realValues : np.ndarray, isClassification : bool) -> np.ndarray:
+    if (isClassification) :
+        return softmax_2(output) - realValues
     else :
         return 2 * (output - realValues)
 

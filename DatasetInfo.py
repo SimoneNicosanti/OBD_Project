@@ -1,8 +1,9 @@
 dataset_dict = {
+    
     "Cancer" : {
         "fileName" : "./datasets/Classification_Cancer/train.csv",
         "targetName" : "malignant" ,
-        "toDrop" : [],
+        "toDrop" : ["Unnamed: 0"],
         "toOHE" : [] ,
         "classification" : True
         } ,
@@ -11,6 +12,14 @@ dataset_dict = {
         "fileName" : "./datasets/Classification_Digits/train.csv",
         "targetName" : "label",
         "toDrop" : [] ,
+        "toOHE" : [] ,
+        "classification" : True
+    } ,
+
+    "Chinese" : {
+        "fileName" : "./datasets/Classification_Chinese/train.csv",
+        "targetName" : "label",
+        "toDrop" : ["character"] ,
         "toOHE" : [] ,
         "classification" : True
     } ,
