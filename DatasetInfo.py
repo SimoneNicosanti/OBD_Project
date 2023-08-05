@@ -1,3 +1,13 @@
+import pandas as pd
+
+def diamonds_preprocess(diamondsDataset : pd.DataFrame) :
+    diamondsDataset.clarity = diamondsDataset.clarity.replace({"I1" : 1, "SI2" : 2, "SI1" : 3, "VS2" : 4, "VS1" : 5, "VVS2" : 6, "VVS1" : 7, "IF" : 8})
+    diamondsDataset.color = diamondsDataset.color.replace({"D" : 7, "E" : 6, "F" : 5, "G" : 4, "H" : 3, "I" : 2, "J" : 1})
+
+def spaceship_preprocess(spaceshipDataset : pd.DataFrame) :
+    spaceshipDataset["Platform"] = spaceshipDataset["Cabin"].str.slice(0,1)
+
+
 dataset_dict = {
     
     "Cancer" : {
@@ -12,14 +22,6 @@ dataset_dict = {
         "fileName" : "./datasets/Classification_Digits/train.csv",
         "targetName" : "label",
         "toDrop" : [] ,
-        "toOHE" : [] ,
-        "classification" : True
-    } ,
-
-    "Chinese" : {
-        "fileName" : "./datasets/Classification_Chinese/train.csv",
-        "targetName" : "label",
-        "toDrop" : ["character"] ,
         "toOHE" : [] ,
         "classification" : True
     } ,
@@ -61,8 +63,8 @@ dataset_dict = {
         "targetName" : "Transported" ,
         "toDrop" : ["PassengerId", "Cabin"],
         "toOHE" : ["HomePlanet", "CryoSleep", "Destination", "VIP", "Grouped", "Deck", "Side", "Has_expenses", "Is_Embryo", "Platform"] ,
-        "classification" : True
-        # dataset["Platform"] = dataset["Cabin"].str.slice(0,1)
+        "classification" : True ,
+        "preprocess_function" : spaceship_preprocess
     } ,
 
     "Fire" : {
@@ -81,6 +83,15 @@ dataset_dict = {
         "classification" : False
     } ,
 
+    "Diamonds" : {
+        "fileName" : "./datasets/Regression_Diamonds/train.csv",
+        "targetName" : "price" ,
+        "toDrop" : [],
+        "toOHE" : ["cut"] ,
+        "classification" : False ,
+        "preprocess_function" : diamonds_preprocess
+    } ,
+
     "House" : {
         "fileName" : "./datasets/Regression_House/HousePrice.csv",
         "targetName" : "median_house_value" ,
@@ -97,3 +108,4 @@ dataset_dict = {
         "classification" : False
     }
 }
+

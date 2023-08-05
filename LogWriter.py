@@ -21,6 +21,20 @@ def writeAllNormLog(logList : list) -> None :
         for k in range(0, len(logList)) :
             csvWriter.writerow([k, logList[k]])
 
+def writeErrorLog(errorList : list) -> None :
+    filePath = "./log/ErrorLog.csv"
+    if (os.path.exists(filePath)) :
+        os.remove(filePath)
+
+    if (not os.path.exists(filePath)) :
+        with open(filePath, "+x") as normLog :
+            csvWriter = csv.writer(normLog)
+            csvWriter.writerow(["K", "Error"])
+    with open(filePath, "+a") as normLog :
+        csvWriter = csv.writer(normLog)
+        for k in range(0, len(errorList)) :
+            csvWriter.writerow([k, errorList[k]])
+
 def writeClassificationLog(file_name : str, dataset_name : str, resultsList : list) -> None :
     mainDirectoryPath = "./log/" + dataset_name
     if (not os.path.isdir(mainDirectoryPath)) :

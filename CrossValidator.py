@@ -27,6 +27,8 @@ def crossValidate(
         labelsNumber = 1
 
     magicNeuronNum : int = int(2/3 * featuresNumber) + labelsNumber
+    if (magicNeuronNum > 256) :
+        magicNeuronNum = 128
     if (magicNeuronNum not in neuronNumArray) :
         neuronNumArray.append(magicNeuronNum)
 
@@ -35,10 +37,11 @@ def crossValidate(
     ## TODO Mettere un limite a magic number: sui MNIST diventa troppo grande
     if (not crossValidation) :
         numberLayers = 2
-        numberNeurons = [128] * numberLayers
+        numberNeurons = [magicNeuronNum] * numberLayers
         model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method)
-        gradient_norm_array = model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
+        gradient_norm_array, error_array = model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
         writeAllNormLog(gradient_norm_array)
+        writeErrorLog(error_array)
         return model
 
     total_combinations : list = generate_combinations(neuronNumArray, layerNumArray)

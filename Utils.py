@@ -63,6 +63,14 @@ def derivative_e_y_2(output : np.ndarray, realValues : np.ndarray, isClassificat
         return softmax_2(output) - realValues
     else :
         return 2 * (output - realValues)
+    
+def middle_error(output : np.ndarray, realValuesMatrix : np.ndarray, isClassification : bool) -> float :
+    if (isClassification) :
+        cross_entropy = - (realValuesMatrix * np.log(softmax_2(output) + 1e-6))
+        return np.sum(cross_entropy) / realValuesMatrix.shape[0]
+    else :
+        squared_error = np.linalg.norm(realValuesMatrix - output, axis = 1)
+        return np.sum(squared_error) / realValuesMatrix.shape[0]
 
 def diminishing_stepsize(k : int) -> float :
     return 0.001 / (k + 1)

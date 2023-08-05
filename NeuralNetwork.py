@@ -227,7 +227,7 @@ class NeuralNetwork :
 
         return np.array(de_dw)
 
-    def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4, with_SAGA = False) -> list :
+    def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4, with_SAGA = False) -> tuple[list, list] :
         ## TODO Per problemi di regressione bisogna normalizzare anche la parte Y?? Per ora aggiunto ma potrebbe sballare i valori
         if (with_SAGA) :
             return self.__fit_saga(X_train, Y_train, epsilon, max_steps)
@@ -236,7 +236,7 @@ class NeuralNetwork :
             return self.__fit_dyn_sample_2(X_train, Y_train, epsilon, max_steps)
         
 
-    def __fit_dyn_sample_2(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) -> list :
+    def __fit_dyn_sample_2(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) -> tuple[list, list] :
 
         numpyLabels : np.ndarray = np.array(Y_train)
         uniqueLables = np.unique(numpyLabels)
@@ -246,47 +246,52 @@ class NeuralNetwork :
         self.train_std = X_train.std(axis = 0) + 1e-3
         normalized_X_train = (X_train - self.train_mean) / self.train_std
 
-        if (not self.isClassification) :
+        if (self.isClassification) :
+            normalized_Y_train = Y_train
+
+            sortedLabelsMatrix = np.tile(sortedLabels, (X_train.shape[0], 1))
+            labelsMatrix = np.tile(Y_train.T, (sortedLabels.shape[0], 1)).T
+            realValuesMatrix = (sortedLabelsMatrix == labelsMatrix).astype(int)
+        else :
             self.train_y_mean = Y_train.mean(axis = 0)
             self.train_y_std = Y_train.std(axis = 0)
             normalized_Y_train = (Y_train - self.train_y_mean) / self.train_y_std
-        else :
-            normalized_Y_train = Y_train
+
+            realValuesMatrix = normalized_Y_train[:, np.newaxis]
+            
         
         de_dw_tot : np.ndarray = None
         initialized_de_dw = False
         gradient_norm = epsilon
         gradient_norm_array = []
+        error_array = []
         k = 1
         while (gradient_norm >= epsilon and k <= max_steps) :
-
+            ## TODO : Aggiungere l'epoca come il numero di volte in cui si sono visti tutti i campioni almeno una volta
             # TODO : la letteratura dice che scegliere come dimensione del mini-batch un multiplo di 2 aiuta
+
             mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
-            #mini_batch_indexes = np.random.randint(0, len(normalized_X_train), 1)
             mini_batch_train = normalized_X_train[mini_batch_indexes]
             mini_batch_labels = normalized_Y_train[mini_batch_indexes]
 
             self.do_forwarding(mini_batch_train)
 
-            if (self.isClassification) :
-                sortedLabelsMatrix = np.tile(sortedLabels, (mini_batch_labels.shape[0], 1))
-                batchLabelsMatrix = np.tile(mini_batch_labels.T, (sortedLabels.shape[0], 1)).T
+            batchRealValuesMatrix = realValuesMatrix[mini_batch_indexes]
                 
-                realValuesMatrix = (sortedLabelsMatrix == batchLabelsMatrix).astype(int)
-            else :
-                realValuesMatrix = mini_batch_labels[:, np.newaxis]
-                #print(realValuesMatrix)
-                
-            gradientSquaredNorm = self.backpropagation_2(realValuesMatrix, k)
+            gradientSquaredNorm = self.backpropagation_2(batchRealValuesMatrix, k)
             gradient_norm = np.sqrt(gradientSquaredNorm)
-            print("Gradient's norm: ", gradient_norm, "--", "K: ", k)
+
+            self.do_forwarding(normalized_X_train)
+            error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
+            error_array.append(error)
+            print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "K: ", k)
             gradient_norm_array.append(gradient_norm)
 
             k += 1
 
         ## TODO Attenzione concorrenza dei thread
         #writeAllNormLog(gradient_norm_array)
-        return gradient_norm_array
+        return gradient_norm_array, error_array
 
     def __fit_dyn_sample(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) -> list :
 
