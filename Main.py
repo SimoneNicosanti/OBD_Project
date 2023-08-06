@@ -14,7 +14,6 @@ def main() :
     dataset_info = dataset_dict[dataset_name]
     dataset = pd.read_csv(dataset_info["fileName"])
     targetName = dataset_info["targetName"]
-    #dataset["Platform"] = dataset["Cabin"].str.slice(0,1)
     toDrop = dataset_info["toDrop"]
     toOHE = dataset_info["toOHE"]
     isClassification = dataset_info["classification"]
@@ -29,7 +28,7 @@ def main() :
     neuronNumArray : list = [64, 128, 256]
     crossValidation = False
     method = StepEnum.NADAM
-    max_steps = 1000
+    max_steps = 500
     with_SAGA = False
     model = crossValidate(
         isClassification, 
@@ -69,3 +68,5 @@ def main() :
 
 if __name__ == "__main__" :
     main()
+
+

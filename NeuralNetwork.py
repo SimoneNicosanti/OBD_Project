@@ -228,7 +228,7 @@ class NeuralNetwork :
         return np.array(de_dw)
 
     def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4, with_SAGA = False) -> tuple[list, list] :
-        ## TODO Per problemi di regressione bisogna normalizzare anche la parte Y?? Per ora aggiunto ma potrebbe sballare i valori
+
         if (with_SAGA) :
             return self.__fit_saga(X_train, Y_train, epsilon, max_steps)
         else :
@@ -282,7 +282,14 @@ class NeuralNetwork :
             gradient_norm = np.sqrt(gradientSquaredNorm)
 
             self.do_forwarding(normalized_X_train)
-            error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
+
+            if (self.isClassification) :
+                error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
+            else :
+                output = self.lastLayer.getOutput() * self.train_y_std + self.train_y_mean
+                matrix = realValuesMatrix * self.train_y_std + self.train_y_mean
+                error = middle_error(output, matrix, self.isClassification)
+                
             error_array.append(error)
             print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "K: ", k)
             gradient_norm_array.append(gradient_norm)
