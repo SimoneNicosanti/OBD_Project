@@ -106,6 +106,14 @@ dataset_dict = {
         "toDrop" : ["url", " timedelta"],
         "toOHE" : [] ,
         "classification" : False
+    } ,
+
+    "Concrete" : {
+        "fileName" : "./datasets/Regression_Concrete/Concrete.csv",
+        "targetName" : "csMPa" ,
+        "toDrop" : [],
+        "toOHE" : [] ,
+        "classification" : False
     }
 }
 
