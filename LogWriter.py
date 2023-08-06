@@ -70,6 +70,9 @@ def writeAccuracyLog(file_name : str, dataset_name : str, accuracy : float, step
         csvWriter.writerow([accuracy, steps_num, with_saga, method.name])
 
 def cartesian_plot(x : list, y : list, x_label : str, y_label : str, title : str) -> None :
+    if (not os.path.isdir("./log/plots/")) :
+        os.mkdir("./log/plots/")
+    
     plt.figure(figsize = (50, 9), tight_layout = True)
     plt.plot(x,y)
     plt.xlabel(x_label)
@@ -81,6 +84,9 @@ def cartesian_plot(x : list, y : list, x_label : str, y_label : str, title : str
     return
 
 def bar_plot(x : list, y : list, x_label : str, y_label : str, title : str) -> None :
+    if (not os.path.isdir("./log/plots/")) :
+        os.mkdir("./log/plots/")
+
     plt.figure(figsize = (9, 9), tight_layout = True)
     plt.bar(x, y, width = 0.6, color = ['red', 'black'])
     plt.xlabel(x_label)
@@ -91,6 +97,9 @@ def bar_plot(x : list, y : list, x_label : str, y_label : str, title : str) -> N
     return
 
 def pie_plot(x: list, y : list, title : str) -> None :
+    if (not os.path.isdir("./log/plots/")) :
+        os.mkdir("./log/plots/")
+        
     plt.figure(figsize = (9, 9), tight_layout = True)
     fig = plt.figure(figsize = (7, 7))
     plt.pie(x, labels = y, autopct = '%1.1f%%')
