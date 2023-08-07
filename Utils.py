@@ -42,11 +42,10 @@ def oneHotEncoding(dataset : pd.DataFrame, column_names : list) -> pd.DataFrame 
 
 def squaredErrorFunction(output : np.ndarray, realValues : np.ndarray) -> np.ndarray :
     return (np.linalg.norm(output - realValues)) ** 2
-
-## TODO Unificare le implementazioni
+    
 def softmax(output : np.ndarray) -> np.ndarray :
-    expon = np.power(np.e, output - output.max())
-    return expon / np.sum(expon)
+    expon = np.power(np.e, output - output.max(axis = 1, keepdims = True))
+    return expon / np.sum(expon, axis = 1, keepdims = True)
 
 def derivative_e_y(output : np.ndarray, realValues : np.ndarray, isClassification : bool) -> np.ndarray:
     if (isClassification) :
@@ -54,19 +53,9 @@ def derivative_e_y(output : np.ndarray, realValues : np.ndarray, isClassificatio
     else :
         return 2 * (output - realValues)
     
-def softmax_2(output : np.ndarray) -> np.ndarray :
-    expon = np.power(np.e, output - output.max(axis = 1, keepdims = True))
-    return expon / np.sum(expon, axis = 1, keepdims = True)
-
-def derivative_e_y_2(output : np.ndarray, realValues : np.ndarray, isClassification : bool) -> np.ndarray:
-    if (isClassification) :
-        return softmax_2(output) - realValues
-    else :
-        return 2 * (output - realValues)
-    
 def middle_error(output : np.ndarray, realValuesMatrix : np.ndarray, isClassification : bool) -> float :
     if (isClassification) :
-        cross_entropy = - (realValuesMatrix * np.log(softmax_2(output) + 1e-6))
+        cross_entropy = - (realValuesMatrix * np.log(softmax(output) + 1e-6))
         return np.sum(cross_entropy) / realValuesMatrix.shape[0]
     else :
         squared_error = np.linalg.norm(realValuesMatrix - output, axis = 1) ** 2

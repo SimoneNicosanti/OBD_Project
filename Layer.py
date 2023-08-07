@@ -184,9 +184,7 @@ class NadamLayer(Layer) :
                     self.weightMatrix[i][j] -= learning_rate * (m_hat + gamma * nesterov) / (np.sqrt(v_hat) + 1e-8)
                 self.prevGradient[index] = gradient_esteem_elem
 
-# TODO : Adadelta
-
-class AdadeltaLayer(Layer) :
+class AdaDeltaLayer(Layer) :
     def __init__(self, neuronNumber : int) -> None :
         super().__init__(neuronNumber)
         self.accumulatore_G : np.ndarray = None

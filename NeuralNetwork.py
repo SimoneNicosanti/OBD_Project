@@ -47,7 +47,7 @@ class NeuralNetwork :
         elif method == StepEnum.NADAM :
             return NadamLayer(neuronNum)
         elif method == StepEnum.ADADELTA : 
-            return AdadeltaLayer(neuronNum)
+            return AdaDeltaLayer(neuronNum)
         else :
             return Layer(neuronNum)
         
@@ -160,7 +160,7 @@ class NeuralNetwork :
     def backpropagation_2(self, realValuesMatrix : np.ndarray, k : int) -> float :
 
         de_da_list : list[np.ndarray] = [None] * (self.hiddenLayerNum + 2)
-        de_da_list[-1] = derivative_e_y_2(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification) * 1 ## Controllato: uguale ad altro caso
+        de_da_list[-1] = derivative_e_y(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification) * 1 ## Controllato: uguale ad altro caso
         
         currLayer : Layer = self.lastLayer.prevLayer
         i = self.hiddenLayerNum
@@ -194,7 +194,7 @@ class NeuralNetwork :
 
         de_da = []
         de_dw = []
-        de_dy = derivative_e_y(layer.getOutput()[point_index], labels, self.isClassification)
+        de_dy = np.squeeze(derivative_e_y(layer.getOutput()[point_index][np.newaxis, :], labels, self.isClassification))
         for j in range(0, layer.neuronNumber) :
             prev_layer : Layer = layer.prevLayer
             de_da.append(de_dy[j] * 1)
@@ -261,9 +261,6 @@ class NeuralNetwork :
 
             realValuesMatrix = normalized_Y_train[:, np.newaxis]
             
-        
-        de_dw_tot : np.ndarray = None
-        initialized_de_dw = False
         gradient_norm = epsilon
         gradient_norm_array = []
         error_array = []
@@ -380,6 +377,7 @@ class NeuralNetwork :
         initialized_saga_acc = False
         gradient_norm = epsilon
         gradient_norm_array = []
+        error_array = []
         
         k = 0
         while (gradient_norm >= epsilon and k <= max_steps) :
@@ -424,7 +422,7 @@ class NeuralNetwork :
             self.update_weights(gradient_esteem, k)
 
         #writeAllNormLog(gradient_norm_array)
-        return gradient_norm_array
+        return gradient_norm_array, error_array
 
     def update_weights(self, gradient_esteem : np.ndarray, k : int) -> None :
         layer = self.lastLayer
