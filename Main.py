@@ -57,6 +57,8 @@ def main() :
     print("Training Accuracy: ", accuracy_trainining)
     print("Generalization Accuracy:", accuracy_generalization)
 
+    # TODO : istogramma dei residui per problemi di regressione
+
     normDataFrame = pd.read_csv("./log/NormLog.csv")
     cartesian_plot(normDataFrame["K"], normDataFrame["Norm"], "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
 
