@@ -28,7 +28,7 @@ def main() :
     neuronNumArray : list = [64, 128, 256]
     crossValidation = False
     method = StepEnum.NADAM
-    max_steps = 1000
+    max_steps = 10
     with_SAGA = False
     model = crossValidate(
         isClassification, 
@@ -44,11 +44,8 @@ def main() :
         crossValidation = crossValidation
     )
 
-    #print(model.train_y_mean)
-    #model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
-
-    accuracy_trainining, trainingPredictionArray = model.predict_2(X_train, Y_train)
-    accuracy_generalization, generalizationPredictionArray = model.predict_2(X_test, Y_test)
+    accuracy_trainining, trainingPredictionArray = model.predict(X_train, Y_train)
+    accuracy_generalization, generalizationPredictionArray = model.predict(X_test, Y_test)
     writeClassificationLog("Training", dataset_name, trainingPredictionArray)
     writeClassificationLog("Generalization", dataset_name, generalizationPredictionArray)
     writeAccuracyLog("Training", dataset_name, accuracy_trainining, max_steps, with_SAGA, method)

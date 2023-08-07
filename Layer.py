@@ -42,7 +42,6 @@ class Layer :
         self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
         self.de_dw_bias : np.ndarray = np.zeros(self.neuronNumber)
 
-    # TODO : verifica diminishing stepsize
     def update_weights(self, gradient_esteem : np.ndarray, start : int, k : int) -> None :
         end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
         esteem_subset : np.ndarray = gradient_esteem[start : end]

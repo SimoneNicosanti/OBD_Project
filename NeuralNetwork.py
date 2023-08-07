@@ -52,7 +52,7 @@ class NeuralNetwork :
             return Layer(neuronNum)
         
     
-    def predict_2(self, X_test : np.ndarray, Y_test : np.ndarray) -> np.ndarray :
+    def predict(self, X_test : np.ndarray, Y_test : np.ndarray) -> np.ndarray :
         numpyLabels : np.ndarray = np.array(Y_test)
         uniqueLables = np.unique(numpyLabels)
         sortedLabels = np.sort(uniqueLables)
@@ -98,53 +98,6 @@ class NeuralNetwork :
         accuracy /= X_test.shape[0]
 
         return accuracy, predictionArray
-        
-
-    def predict(self, X_test : np.ndarray, Y_test : np.ndarray) -> np.ndarray :
-        numpyLabels : np.ndarray = np.array(Y_test)
-        uniqueLables = np.unique(numpyLabels)
-        sortedLabels = np.sort(uniqueLables)
-
-        predictionArray = []
-
-        normalized_X_test = (X_test - self.train_mean) / self.train_std
-
-        ## TODO Controllare per concorrenza
-        if (not self.isClassification) :
-            normalized_Y_test = (Y_test - self.train_y_mean) / self.train_y_std
-        else :
-            normalized_Y_test = Y_test
-        
-        accuracy = 0
-
-        for i in range(0, len(normalized_X_test)) :
-            elem = normalized_X_test[i]
-            self.do_forwarding(elem)
-
-            elemLabel = normalized_Y_test[i]
-
-            networkOutput = self.lastLayer.getOutput()
-
-            if (self.isClassification) :
-                elemLabelsArray : np.ndarray = (sortedLabels == elemLabel).astype(int)
-                probs = softmax(networkOutput)
-                maxProbIndex = probs.argmax()
-                predictions = np.zeros(probs.shape)
-                predictions[maxProbIndex] = 1
-
-                realClassIndex = elemLabelsArray.argmax()
-                if (predictions[realClassIndex] == 1) :
-                    accuracy += 1
-            else :
-                predictions = networkOutput * self.train_y_std + self.train_y_mean
-                elemLabelsArray = elemLabel * self.train_y_std + self.train_y_mean
-                accuracy += squaredErrorFunction(predictions, elemLabelsArray)
-
-            predictionArray.append([predictions, elemLabelsArray])
-
-        accuracy /= X_test.shape[0]
-
-        return accuracy, predictionArray
     
     def do_forwarding(self, input) :
         layer : Layer = self.firstLayer
@@ -157,7 +110,7 @@ class NeuralNetwork :
 
         return 
     
-    def backpropagation_2(self, realValuesMatrix : np.ndarray, k : int) -> float :
+    def backpropagation_dataset(self, realValuesMatrix : np.ndarray, k : int) -> float :
 
         de_da_list : list[np.ndarray] = [None] * (self.hiddenLayerNum + 2)
         de_da_list[-1] = derivative_e_y(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification) * 1 ## Controllato: uguale ad altro caso
@@ -189,7 +142,7 @@ class NeuralNetwork :
 
         return np.sum(gradientSquaredNormArray)
 
-    def backpropagation(self, labels : np.ndarray, point_index : int) -> np.ndarray :
+    def backpropagation_sample(self, labels : np.ndarray, point_index : int) -> np.ndarray :
         layer : Layer = self.lastLayer
 
         de_da = []
@@ -234,11 +187,10 @@ class NeuralNetwork :
         if (with_SAGA) :
             return self.__fit_saga(X_train, Y_train, epsilon, max_steps)
         else :
-            #return self.__fit_dyn_sample(X_train, Y_train, epsilon, max_steps)
-            return self.__fit_dyn_sample_2(X_train, Y_train, epsilon, max_steps)
+            return self.__fit_dyn_sample(X_train, Y_train, epsilon, max_steps)
         
 
-    def __fit_dyn_sample_2(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) -> tuple[list, list] :
+    def __fit_dyn_sample(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e4) -> tuple[list, list] :
 
         numpyLabels : np.ndarray = np.array(Y_train)
         uniqueLables = np.unique(numpyLabels)
@@ -264,20 +216,21 @@ class NeuralNetwork :
         gradient_norm = epsilon
         gradient_norm_array = []
         error_array = []
+        samples_seen = np.zeros(len(normalized_X_train))
+        
         k = 1
-        while (gradient_norm >= epsilon and k <= max_steps) :
-            ## TODO : Aggiungere l'epoca come il numero di volte in cui si sono visti tutti i campioni almeno una volta
+        while (gradient_norm >= epsilon and k <= epochs) :
+            # TODO : Aggiungere l'epoca come il numero di volte in cui si sono visti tutti i campioni almeno una volta
             # TODO : la letteratura dice che scegliere come dimensione del mini-batch un multiplo di 2 aiuta
 
             mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
             mini_batch_train = normalized_X_train[mini_batch_indexes]
-            mini_batch_labels = normalized_Y_train[mini_batch_indexes]
 
             self.do_forwarding(mini_batch_train)
 
             batchRealValuesMatrix = realValuesMatrix[mini_batch_indexes]
                 
-            gradientSquaredNorm = self.backpropagation_2(batchRealValuesMatrix, k)
+            gradientSquaredNorm = self.backpropagation_dataset(batchRealValuesMatrix, k)
             gradient_norm = np.sqrt(gradientSquaredNorm)
 
             self.do_forwarding(normalized_X_train)
@@ -290,74 +243,17 @@ class NeuralNetwork :
                 error = middle_error(output, matrix, self.isClassification)
                 
             error_array.append(error)
-            print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "K: ", k)
+            print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
             gradient_norm_array.append(gradient_norm)
 
-            k += 1
+            samples_seen[mini_batch_indexes] = 1
+            if (np.all(samples_seen == 1)) :
+                k += 1
+                samples_seen[samples_seen == 1] = 0
 
-        ## TODO Attenzione concorrenza dei thread
-        #writeAllNormLog(gradient_norm_array)
         return gradient_norm_array, error_array
 
-    def __fit_dyn_sample(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) -> list :
-
-        numpyLabels : np.ndarray = np.array(Y_train)
-        uniqueLables = np.unique(numpyLabels)
-        sortedLabels = np.sort(uniqueLables)
-
-        self.train_mean = X_train.mean(axis = 0)
-        self.train_std = X_train.std(axis = 0) + 1e-3
-        normalized_X_train = (X_train - self.train_mean) / self.train_std
-
-        if (not self.isClassification) :
-            self.train_y_mean = Y_train.mean(axis = 0)
-            self.train_y_std = Y_train.std(axis = 0)
-            normalized_Y_train = (Y_train - self.train_y_mean) / self.train_y_std
-        else :
-            normalized_Y_train = Y_train
-        
-        de_dw_tot : np.ndarray = None
-        initialized_de_dw = False
-        gradient_norm = epsilon
-        gradient_norm_array = []
-        k = 0
-        while (gradient_norm >= epsilon and k <= max_steps) :
-
-            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
-            #mini_batch_indexes = np.random.randint(0, len(normalized_X_train), 1)
-            mini_batch_train = normalized_X_train[mini_batch_indexes]
-            mini_batch_labels = normalized_Y_train[mini_batch_indexes]
-
-            self.do_forwarding(mini_batch_train)
-
-            for i in range(0, len(mini_batch_indexes)) :
-                elemLabel = mini_batch_labels[i]
-                if (self.isClassification) :
-                    elemLabelsArray = (sortedLabels == elemLabel).astype(int)
-                else :
-                    elemLabelsArray = elemLabel
-
-                de_dw : np.ndarray = self.backpropagation(elemLabelsArray, i)
-                if (not initialized_de_dw) :
-                    de_dw_tot = de_dw
-                    initialized_de_dw = True
-                else :
-                    de_dw_tot += de_dw
-            
-            initialized_de_dw = False
-            gradient_norm = np.linalg.norm(de_dw_tot)
-            gradient_norm_array.append(gradient_norm)
-            print("Gradient's norm: ", gradient_norm, "--", "K: ", k)
-            k += 1
-
-            self.update_weights(de_dw_tot, k)
-
-        #writeAllNormLog(gradient_norm_array)
-        return gradient_norm_array
-    
-
     def __fit_saga(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) -> list :
-        ## TODO Scrivere una versione di SAGA che vada bene per la backpropagation fatta tutta insieme
 
         numpyLabels : np.ndarray = np.array(Y_train)
         uniqueLables = np.unique(numpyLabels)
@@ -390,10 +286,6 @@ class NeuralNetwork :
 
             sagaIndex = np.random.randint(0, len(mini_batch_indexes))
 
-            # mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
-            # mini_batch_train = normalized_X_train
-            # mini_batch_labels = normalized_Y_train
-
             self.do_forwarding(mini_batch_train)
 
             sagaIndex = np.random.randint(0, len(mini_batch_indexes))
@@ -404,7 +296,7 @@ class NeuralNetwork :
             else :
                 elemLabelsArray = elemLabel
 
-            de_dw : np.ndarray = self.backpropagation(elemLabelsArray, sagaIndex)
+            de_dw : np.ndarray = self.backpropagation_sample(elemLabelsArray, sagaIndex)
             
             if (not initialized_saga_acc) :
                 accumulatorSAGA = np.zeros((X_train.shape[0], de_dw.shape[0]))
@@ -414,6 +306,8 @@ class NeuralNetwork :
             
             accumulatorSAGA[sagaIndex] = de_dw
 
+            # TODO : Calcolo errore
+
             gradient_norm = np.linalg.norm(gradient_esteem)
             gradient_norm_array.append(gradient_norm)
             print("Gradient's norm: ", gradient_norm, "--", "K: ", k)
@@ -421,7 +315,6 @@ class NeuralNetwork :
 
             self.update_weights(gradient_esteem, k)
 
-        #writeAllNormLog(gradient_norm_array)
         return gradient_norm_array, error_array
 
     def update_weights(self, gradient_esteem : np.ndarray, k : int) -> None :
