@@ -9,7 +9,7 @@ from CrossValidator import *
 def main() :
     np.random.seed(123456)
 
-    dataset_name = "Students"
+    dataset_name = "Pistachio"
 
     dataset_info = dataset_dict[dataset_name]
     dataset = pd.read_csv(dataset_info["fileName"])

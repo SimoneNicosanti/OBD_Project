@@ -185,3 +185,35 @@ class NadamLayer(Layer) :
                 self.prevGradient[index] = gradient_esteem_elem
 
 # TODO : Adadelta
+
+class AdadeltaLayer(Layer) :
+    def __init__(self, neuronNumber : int) -> None :
+        super().__init__(neuronNumber)
+        self.accumulatore_G : np.ndarray = None
+        self.accumulatore_T : np.ndarray = None
+        self.accumulatore_deltaT : np.ndarray = None
+
+    def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
+        super().setPrevAndNextLayer(prevLayer, nextLayer)
+
+        if (prevLayer != None) :
+            self.accumulatore_G = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+            self.accumulatore_T = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+            self.accumulatore_deltaT = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+
+
+    def update_weights(self, gradient_esteem : np.ndarray, start : int, k : int, rho : float = 0.001) -> None :
+        end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
+        esteem_subset : np.ndarray = gradient_esteem[start : end]
+        for j in range(0, self.neuronNumber) :
+            for i in range(0, self.prevLayer.neuronNumber + 1) :
+                index = j * (self.prevLayer.neuronNumber + 1) + i
+                gradient_esteem_elem = esteem_subset[index]
+                self.accumulatore_G[index] = rho * self.accumulatore_G[index] + (1 - rho) * gradient_esteem_elem ** 2
+                self.accumulatore_deltaT[index] = - ((np.sqrt(np.diag(self.accumulatore_T)[index][index] + 1e-8))/(np.sqrt(np.diag(self.accumulatore_G)[index][index] + 1e-8))) * gradient_esteem_elem
+                self.accumulatore_T = rho * self.accumulatore_T + (1 - rho) * self.accumulatore_deltaT[index] ** 2
+                if (i == self.prevLayer.neuronNumber) :
+                    self.biasArray[j] += self.accumulatore_deltaT[index]
+                else :
+                    self.weightMatrix[i][j] += self.accumulatore_deltaT[index]
+                

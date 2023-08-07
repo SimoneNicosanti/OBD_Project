@@ -46,6 +46,8 @@ class NeuralNetwork :
             return AdamLayer(neuronNum)
         elif method == StepEnum.NADAM :
             return NadamLayer(neuronNum)
+        elif method == StepEnum.ADADELTA : 
+            return AdadeltaLayer(neuronNum)
         else :
             return Layer(neuronNum)
         

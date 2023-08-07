@@ -6,3 +6,5 @@ class StepEnum(Enum) :
     RMSPROP = 2
     ADAM = 3
     NADAM = 4
+    ADADELTA = 5
+    
