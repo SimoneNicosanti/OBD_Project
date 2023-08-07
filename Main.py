@@ -28,7 +28,7 @@ def main() :
     neuronNumArray : list = [64, 128, 256]
     crossValidation = False
     method = StepEnum.NADAM
-    max_steps = 500
+    max_steps = 1000
     with_SAGA = False
     model = crossValidate(
         isClassification, 
