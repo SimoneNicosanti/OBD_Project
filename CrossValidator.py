@@ -5,7 +5,6 @@ from threading import *
 import time
 from LogWriter import *
 
-
 def crossValidate(
         isClassification : bool, 
         layerNumArray : list, 
@@ -18,7 +17,6 @@ def crossValidate(
         with_SAGA : bool, 
         method : StepEnum, 
         crossValidation : bool = False) -> NeuralNetwork :
-    
 
     featuresNumber = X_train.shape[1]
     if (isClassification) :
@@ -32,8 +30,6 @@ def crossValidate(
     if (defaultNeuronNumber not in neuronNumArray) :
         neuronNumArray.append(defaultNeuronNumber)
 
-    # max_steps = 100
-    # with_SAGA = True
     if (not crossValidation) :
         numberLayers = 2
         numberNeurons = [defaultNeuronNumber] * numberLayers
@@ -46,9 +42,9 @@ def crossValidate(
     total_combinations : list = generate_combinations(neuronNumArray, layerNumArray)
  
     best_accuracy = 0.0
-    best_layers : int = 0
-    best_neurons : list = []
     best_model : NeuralNetwork = None
+
+    start = time.time()
 
     for i in range(0, len(total_combinations)) :
         numberNeurons = total_combinations[i]
@@ -62,17 +58,13 @@ def crossValidate(
 
         if (accuracy_validation >= best_accuracy) :
             best_accuracy = accuracy_validation
-            best_layers = numberLayers
-            best_neurons = numberNeurons
             best_model = model
 
     end = time.time()
 
-    # print(end - start)
+    print(end - start)
 
     print("Best accuracy: ", best_accuracy)
-    # print("Best number of layers: ", best_layers)
-    # print("Best combination of neurons: ", best_neurons)
 
     return best_model
 
@@ -89,19 +81,14 @@ def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNu
     if (magicNeuronNum not in neuronNumArray) :
         neuronNumArray.append(magicNeuronNum)
 
-    # max_steps = 100
-    # with_SAGA = True
     if (not crossValidation) :
         numberLayers = 3
         numberNeurons = [100] * numberLayers
         model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method)
         model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
         return model
-
  
     best_accuracy = 0.0
-    best_layers : int = 0
-    best_neurons : list = []
     best_model : NeuralNetwork = None
 
     total_combinations : list = generate_combinations(neuronNumArray, layerNumArray)
@@ -133,10 +120,7 @@ def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNu
             best_accuracy = thread_result[0]
             best_model = thread_result[1]
 
-
     print("Best accuracy: ", best_accuracy)
-    # print("Best number of layers: ", best_layers)
-    # print("Best combination of neurons: ", best_neurons)
 
     return best_model
 
@@ -145,9 +129,7 @@ def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNu
 def generate_combinations(neuronNumArray, layerNumArray : list) -> list:
     total_combinations = []
     for layerNum in layerNumArray:
-        #layer_combinations = []
         generate_combinations_rec(neuronNumArray, layerNum, [], total_combinations)
-        #total_combinations.append(layer_combinations)
     return total_combinations
 
 def generate_combinations_rec(neuronNumArray, current_layers, current_combination, layer_combinations):
@@ -175,8 +157,6 @@ def thread_function(
     ) -> None :
 
     best_accuracy = 0.0
-    best_layers : int = 0
-    best_neurons : list = []
     best_model : NeuralNetwork = None
     for configuration in thread_configuration_list :
         model : NeuralNetwork = NeuralNetwork(len(configuration), featuresNumber, labelsNumber, configuration, isClassification, method)
@@ -187,8 +167,6 @@ def thread_function(
 
         if (accuracy_validation >= best_accuracy) :
             best_accuracy = accuracy_validation
-            # best_layers = numberLayers
-            # best_neurons = numberNeurons
             best_model = model
 
     thread_best_model_list[thread_index] = (best_accuracy, best_model)

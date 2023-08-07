@@ -9,7 +9,7 @@ from CrossValidator import *
 def main() :
     np.random.seed(123456)
 
-    dataset_name = "Cancer"
+    dataset_name = "MNIST"
 
     dataset_info = dataset_dict[dataset_name]
     dataset = pd.read_csv(dataset_info["fileName"])
@@ -28,7 +28,7 @@ def main() :
     neuronNumArray : list = [64, 128, 256]
     crossValidation = False
     method = StepEnum.NADAM
-    max_steps = 10
+    max_steps = 1
     with_SAGA = False
     model = crossValidate(
         isClassification, 

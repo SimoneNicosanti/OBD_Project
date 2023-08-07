@@ -189,7 +189,6 @@ class NeuralNetwork :
         else :
             return self.__fit_dyn_sample(X_train, Y_train, epsilon, max_steps)
         
-
     def __fit_dyn_sample(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e4) -> tuple[list, list] :
 
         numpyLabels : np.ndarray = np.array(Y_train)
@@ -220,10 +219,10 @@ class NeuralNetwork :
         
         k = 1
         while (gradient_norm >= epsilon and k <= epochs) :
-            # TODO : Aggiungere l'epoca come il numero di volte in cui si sono visti tutti i campioni almeno una volta
-            # TODO : la letteratura dice che scegliere come dimensione del mini-batch un multiplo di 2 aiuta
+            # TODO : Scelta della dimensione del mini-batch
 
             mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
+            #mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(2 ^ (5 + k)), len(normalized_X_train))
             mini_batch_train = normalized_X_train[mini_batch_indexes]
 
             self.do_forwarding(mini_batch_train)
@@ -233,16 +232,17 @@ class NeuralNetwork :
             gradientSquaredNorm = self.backpropagation_dataset(batchRealValuesMatrix, k)
             gradient_norm = np.sqrt(gradientSquaredNorm)
 
-            self.do_forwarding(normalized_X_train)
+            #self.do_forwarding(normalized_X_train)
 
-            if (self.isClassification) :
-                error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
-            else :
-                output = self.lastLayer.getOutput() * self.train_y_std + self.train_y_mean
-                matrix = realValuesMatrix * self.train_y_std + self.train_y_mean
-                error = middle_error(output, matrix, self.isClassification)
-                
-            error_array.append(error)
+            #if (self.isClassification) :
+            #    error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
+            #else :
+            #    output = self.lastLayer.getOutput() * self.train_y_std + self.train_y_mean
+            #    matrix = realValuesMatrix * self.train_y_std + self.train_y_mean
+            #    error = middle_error(output, matrix, self.isClassification)
+               
+            #error_array.append(error)
+            error = 0
             print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
             gradient_norm_array.append(gradient_norm)
 
@@ -253,6 +253,7 @@ class NeuralNetwork :
 
         return gradient_norm_array, error_array
 
+    # TODO : impostare flag per la visualizzazione dell'errore
     def __fit_saga(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) -> list :
 
         numpyLabels : np.ndarray = np.array(Y_train)
