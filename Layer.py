@@ -52,9 +52,9 @@ class Layer :
             for i in range(0, self.prevLayer.neuronNumber + 1) :
                 gradient_esteem_elem = esteem_subset[j * (self.prevLayer.neuronNumber + 1) + i]
                 if (i == self.prevLayer.neuronNumber) :
-                    self.biasArray[j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.biasArray[j])
+                    self.biasArray[j] -= alpha * (gradient_esteem_elem + self.lambda_L1 * np.sign(self.biasArray[j]) +  2 * self.lambda_L2 * self.biasArray[j] )
                 else :
-                    self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.weightMatrix[i][j])
+                    self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + self.lambda_L1 * np.sign(self.weightMatrix[i][j]) + 2 * self.lambda_L2 * self.weightMatrix[i][j])
         
     def getOutput(self) -> np.ndarray :
         return self.outputArray
@@ -67,10 +67,12 @@ class Layer :
         dz[z_array > 0] = 1
         return dz
 
+
 class AdaGradLayer(Layer) :
     def __init__(self, neuronNumber : int, lambda_L1 : float, lambda_L2 : float) -> None :
         super().__init__(neuronNumber, lambda_L1, lambda_L2)
         self.adaGradAccumulator : np.ndarray = None
+        
 
     def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
         super().setPrevAndNextLayer(prevLayer, nextLayer)
@@ -88,14 +90,17 @@ class AdaGradLayer(Layer) :
                 self.adaGradAccumulator[index] += gradient_esteem_elem ** 2
                 alpha = learning_rate / (np.sqrt(self.adaGradAccumulator[index]) + 1e-8)
                 if (i == self.prevLayer.neuronNumber) :
-                    self.biasArray[j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.biasArray[j])
+                    self.biasArray[j] -= alpha * (gradient_esteem_elem + self.lambda_L1 * np.sign(self.biasArray[j]) +  2 * self.lambda_L2 * self.biasArray[j] )
                 else :
-                    self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.weightMatrix[i][j])
+                    self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + self.lambda_L1 * np.sign(self.weightMatrix[i][j]) + 2 * self.lambda_L2 * self.weightMatrix[i][j])
+                    
+
 
 class RMSPropLayer(Layer) :
     def __init__(self, neuronNumber : int, lambda_L1 : float, lambda_L2 : float) -> None :
         super().__init__(neuronNumber, lambda_L1, lambda_L2)
         self.rmsPropAccumulator : np.ndarray = None
+        
 
     def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
         super().setPrevAndNextLayer(prevLayer, nextLayer)
@@ -113,9 +118,11 @@ class RMSPropLayer(Layer) :
                 self.rmsPropAccumulator[index] = 0.9 * self.rmsPropAccumulator[index] + 0.1 * gradient_esteem_elem ** 2
                 alpha = learning_rate / (np.sqrt(self.rmsPropAccumulator[index]) + 1e-8)
                 if (i == self.prevLayer.neuronNumber) :
-                    self.biasArray[j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.biasArray[j])
+                    self.biasArray[j] -= alpha * (gradient_esteem_elem + self.lambda_L1 * np.sign(self.biasArray[j]) +  2 * self.lambda_L2 * self.biasArray[j] )
                 else :
-                    self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.weightMatrix[i][j])
+                    self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + self.lambda_L1 * np.sign(self.weightMatrix[i][j]) + 2 * self.lambda_L2 * self.weightMatrix[i][j])
+                    
+
 
 class AdamLayer(Layer) :
     def __init__(self, neuronNumber : int, lambda_L1 : float, lambda_L2 : float) -> None :
@@ -142,12 +149,14 @@ class AdamLayer(Layer) :
                 m_hat = self.adamM[index] / (1 - beta1 ** k)
                 v_hat = self.adamV[index] / (1 - beta2 ** k)
                 if (i == self.prevLayer.neuronNumber) :
-                    self.biasArray[j] -= learning_rate * (m_hat / (np.sqrt(v_hat) + 1e-8) + 2 * self.lambda_L2 * self.biasArray[j])
+                    self.biasArray[j] -= learning_rate * (m_hat / (np.sqrt(v_hat) + 1e-8) + self.lambda_L1 * np.sign(self.biasArray[j]) + 2 * self.lambda_L2 * self.biasArray[j])
+                    
                 else :
-                    self.weightMatrix[i][j] -= learning_rate * (m_hat / (np.sqrt(v_hat) + 1e-8) + 2 * self.lambda_L2 * self.weightMatrix[i][j])
+                    self.weightMatrix[i][j] -= learning_rate * (m_hat / (np.sqrt(v_hat) + 1e-8) + self.lambda_L1 * np.sign(self.weightMatrix[i][j]) + 2 * self.lambda_L2 * self.weightMatrix[i][j])
+                    
 
 class NadamLayer(Layer) :
-    def __init__(self, neuronNumber : int, lambda_L1 : float, lambda_L2 : float) -> None :
+    def __init__(self, neuronNumber : int , lambda_L1 : float, lambda_L2 : float) -> None :
         super().__init__(neuronNumber, lambda_L1, lambda_L2)
         self.adamM : np.ndarray = None
         self.adamV : np.ndarray = None
@@ -168,17 +177,17 @@ class NadamLayer(Layer) :
             for i in range(0, self.prevLayer.neuronNumber + 1) :
                 index = j * (self.prevLayer.neuronNumber + 1) + i
                 gradient_esteem_elem = esteem_subset[index]
-                # if (i != self.prevLayer.neuronNumber) :
-                #     gradient_esteem_elem += 0.001 * self.weightMatrix[i][j]
+                if (i != self.prevLayer.neuronNumber) :
+                    gradient_esteem_elem += 0.001 * self.weightMatrix[i][j]
                 self.adamM[index] = beta1 * self.adamM[index] + (1 - beta1) * gradient_esteem_elem
                 self.adamV[index] = beta2 * self.adamV[index] + (1 - beta2) * gradient_esteem_elem ** 2
                 m_hat = self.adamM[index] / (1 - beta1 ** k)
                 v_hat = self.adamV[index] / (1 - beta2 ** k)
                 nesterov = (1 - gamma) * gradient_esteem_elem + gamma * self.prevGradient[index]
                 if (i == self.prevLayer.neuronNumber) :
-                    self.biasArray[j] -= learning_rate * ((m_hat + gamma * nesterov) / (np.sqrt(v_hat) + 1e-8) + 2 * self.lambda_L2 * self.biasArray[j])
+                    self.biasArray[j] -= learning_rate * ((m_hat + gamma * nesterov) / (np.sqrt(v_hat) + 1e-8) + self.lambda_L1 * np.sign(self.biasArray[j]) + 2 * self.lambda_L2 * self.biasArray[j])
                 else :
-                    self.weightMatrix[i][j] -= learning_rate * ((m_hat + gamma * nesterov) / (np.sqrt(v_hat) + 1e-8) + 2 * self.lambda_L2 * self.weightMatrix[i][j])
+                    self.weightMatrix[i][j] -= learning_rate * ((m_hat + gamma * nesterov) / (np.sqrt(v_hat) + 1e-8) + self.lambda_L1 * np.sign(self.weightMatrix[i][j]) + 2 * self.lambda_L2 * self.weightMatrix[i][j])
                 self.prevGradient[index] = gradient_esteem_elem
 
 class AdaDeltaLayer(Layer) :
@@ -196,6 +205,7 @@ class AdaDeltaLayer(Layer) :
             self.accumulatore_T = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
             self.accumulatore_deltaT = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
 
+
     def update_weights(self, gradient_esteem : np.ndarray, start : int, k : int, rho : float = 0.001) -> None :
         end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
         esteem_subset : np.ndarray = gradient_esteem[start : end]
@@ -207,7 +217,8 @@ class AdaDeltaLayer(Layer) :
                 self.accumulatore_deltaT[index] = - ((np.sqrt(np.diag(self.accumulatore_T)[index][index] + 1e-8))/(np.sqrt(np.diag(self.accumulatore_G)[index][index] + 1e-8))) * gradient_esteem_elem
                 self.accumulatore_T = rho * self.accumulatore_T + (1 - rho) * self.accumulatore_deltaT[index] ** 2
                 if (i == self.prevLayer.neuronNumber) :
-                    self.biasArray[j] += self.accumulatore_deltaT[index] + 2 * self.lambda_L2 * self.biasArray[j]
+                    self.biasArray[j] += self.accumulatore_deltaT[index] + self.lambda_L1 * np.sign(self.biasArray[j]) + 2 * self.lambda_L2 * self.biasArray[j]
+                    
                 else :
-                    self.weightMatrix[i][j] += self.accumulatore_deltaT[index] + 2 * self.lambda_L2 * self.weightMatrix[i][j]
+                    self.weightMatrix[i][j] += self.accumulatore_deltaT[index] + self.lambda_L1 * np.sign(self.weightMatrix[i][j]) + 2 * self.lambda_L2 * self.weightMatrix[i][j]
                 

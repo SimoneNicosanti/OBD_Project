@@ -27,9 +27,9 @@ def main() :
     layerNumArray : list = [2, 3]
     neuronNumArray : list = [64, 128, 256]
     lambda_L1 = 0.0
-    lambda_L2 = 0.01
+    lambda_L2 = 0.00001
     crossValidation = False
-    method = StepEnum.NADAM
+    method = StepEnum.ADADELTA
     epochs = 100
     with_SAGA = True
     show_error = False
