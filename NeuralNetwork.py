@@ -61,7 +61,7 @@ class NeuralNetwork :
 
         normalized_X_test = (X_test - self.train_mean) / self.train_std
 
-        ## TODO Controllare per concorrenza
+        # TODO Controllare per concorrenza
         if (not self.isClassification) :
             normalized_Y_test = (Y_test - self.train_y_mean) / self.train_y_std
         else :

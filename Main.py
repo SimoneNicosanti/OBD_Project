@@ -29,7 +29,7 @@ def main() :
     lambda_L1 = 0.0
     lambda_L2 = 0.00001
     crossValidation = False
-    method = StepEnum.ADADELTA
+    method = StepEnum.NADAM
     epochs = 100
     with_SAGA = True
     show_error = False

@@ -5,6 +5,7 @@ from threading import *
 import time
 from LogWriter import *
 
+# TODO : cross validation sui fattori di regolarizzazione
 def crossValidate(
         isClassification : bool, 
         layerNumArray : list, 
