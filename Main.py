@@ -9,7 +9,7 @@ from CrossValidator import *
 def main() :
     np.random.seed(123456)
 
-    dataset_name = "Pistachio"
+    dataset_name = "Cancer"
 
     dataset_info = dataset_dict[dataset_name]
     dataset = pd.read_csv(dataset_info["fileName"])
@@ -27,11 +27,11 @@ def main() :
     layerNumArray : list = [2, 3]
     neuronNumArray : list = [64, 128, 256]
     lambda_L1 = 0.0
-    lambda_L2 = 0.00001
+    lambda_L2 = 0.01
     crossValidation = False
-    method = StepEnum.ADADELTA
-    epochs = 10
-    with_SAGA = False
+    method = StepEnum.NADAM
+    epochs = 100
+    with_SAGA = True
     show_error = False
     model = crossValidate(
         isClassification, 

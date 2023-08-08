@@ -127,8 +127,6 @@ def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNu
 
     return best_model
 
-# TODO : Regolarizzazione
-
 def generate_combinations(neuronNumArray, layerNumArray : list) -> list:
     total_combinations = []
     for layerNum in layerNumArray:

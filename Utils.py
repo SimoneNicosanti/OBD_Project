@@ -49,7 +49,7 @@ def softmax(output : np.ndarray) -> np.ndarray :
 
 def derivative_e_y(output : np.ndarray, realValues : np.ndarray, isClassification : bool) -> np.ndarray:
     if (isClassification) :
-        return softmax(output) - realValues
+        return np.squeeze(softmax(output) - realValues)
     else :
         return 2 * (output - realValues)
     

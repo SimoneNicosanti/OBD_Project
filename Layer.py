@@ -67,12 +67,10 @@ class Layer :
         dz[z_array > 0] = 1
         return dz
 
-
 class AdaGradLayer(Layer) :
     def __init__(self, neuronNumber : int, lambda_L1 : float, lambda_L2 : float) -> None :
         super().__init__(neuronNumber, lambda_L1, lambda_L2)
         self.adaGradAccumulator : np.ndarray = None
-        
 
     def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
         super().setPrevAndNextLayer(prevLayer, nextLayer)
@@ -94,12 +92,10 @@ class AdaGradLayer(Layer) :
                 else :
                     self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.weightMatrix[i][j])
 
-
 class RMSPropLayer(Layer) :
     def __init__(self, neuronNumber : int, lambda_L1 : float, lambda_L2 : float) -> None :
         super().__init__(neuronNumber, lambda_L1, lambda_L2)
         self.rmsPropAccumulator : np.ndarray = None
-        
 
     def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
         super().setPrevAndNextLayer(prevLayer, nextLayer)
@@ -120,7 +116,6 @@ class RMSPropLayer(Layer) :
                     self.biasArray[j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.biasArray[j])
                 else :
                     self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.weightMatrix[i][j])
-
 
 class AdamLayer(Layer) :
     def __init__(self, neuronNumber : int, lambda_L1 : float, lambda_L2 : float) -> None :
@@ -151,9 +146,8 @@ class AdamLayer(Layer) :
                 else :
                     self.weightMatrix[i][j] -= learning_rate * (m_hat / (np.sqrt(v_hat) + 1e-8) + 2 * self.lambda_L2 * self.weightMatrix[i][j])
 
-
 class NadamLayer(Layer) :
-    def __init__(self, neuronNumber : int , lambda_L1 : float, lambda_L2 : float) -> None :
+    def __init__(self, neuronNumber : int, lambda_L1 : float, lambda_L2 : float) -> None :
         super().__init__(neuronNumber, lambda_L1, lambda_L2)
         self.adamM : np.ndarray = None
         self.adamV : np.ndarray = None
@@ -201,7 +195,6 @@ class AdaDeltaLayer(Layer) :
             self.accumulatore_G = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
             self.accumulatore_T = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
             self.accumulatore_deltaT = np.zeros(self.neuronNumber * (self.prevLayer.neuronNumber + 1))
-
 
     def update_weights(self, gradient_esteem : np.ndarray, start : int, k : int, rho : float = 0.001) -> None :
         end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))

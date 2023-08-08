@@ -142,12 +142,13 @@ class NeuralNetwork :
 
         return np.sum(gradientSquaredNormArray)
 
+    # TODO : dà errore quando si fa la regressione col SAGA
     def backpropagation_sample(self, labels : np.ndarray, point_index : int) -> np.ndarray :
         layer : Layer = self.lastLayer
 
         de_da = []
         de_dw = []
-        de_dy = np.squeeze(derivative_e_y(layer.getOutput()[point_index][np.newaxis, :], labels, self.isClassification))
+        de_dy = derivative_e_y(layer.getOutput()[point_index][np.newaxis, :], labels, self.isClassification)
         for j in range(0, layer.neuronNumber) :
             prev_layer : Layer = layer.prevLayer
             de_da.append(de_dy[j] * 1)
@@ -177,7 +178,6 @@ class NeuralNetwork :
                     else:
                         da_dw = prev_layer.getOutput()[point_index][i]
                         de_dw.append(de_da[j] * da_dw)
-
             layer = layer.prevLayer
 
         return np.array(de_dw)
@@ -261,12 +261,15 @@ class NeuralNetwork :
         self.train_std = X_train.std(axis = 0) + 1e-3
         normalized_X_train = (X_train - self.train_mean) / self.train_std
 
-        if (not self.isClassification) :
+        if (self.isClassification) :
+            sortedLabelsMatrix = np.tile(sortedLabels, (X_train.shape[0], 1))
+            labelsMatrix = np.tile(Y_train.T, (sortedLabels.shape[0], 1)).T
+            realValuesMatrix = (sortedLabelsMatrix == labelsMatrix).astype(int)
+            normalized_Y_train = Y_train
+        else :
             self.train_y_mean = Y_train.mean(axis = 0)
             self.train_y_std = Y_train.std(axis = 0)
             normalized_Y_train = (Y_train - self.train_y_mean) / self.train_y_std
-        else :
-            normalized_Y_train = Y_train
         
         initialized_saga_acc = False
         gradient_norm = epsilon
@@ -303,15 +306,14 @@ class NeuralNetwork :
             gradient_norm = np.linalg.norm(gradient_esteem)
             gradient_norm_array.append(gradient_norm)
 
-            # TODO : da rivedere il calcolo dell'errore per il SAGA
             if (show_error) :
                 self.do_forwarding(normalized_X_train)
 
                 if (self.isClassification) :
-                    error = middle_error(self.lastLayer.getOutput()[:, np.newaxis][sagaIndex], elemLabelsArray[:, np.newaxis], self.isClassification)
+                    error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
                 else :
-                    output = self.lastLayer.getOutput()[:, np.newaxis][sagaIndex] * self.train_y_std + self.train_y_mean
-                    matrix = elemLabelsArray[:, np.newaxis] * self.train_y_std + self.train_y_mean
+                    output = self.lastLayer.getOutput() * self.train_y_std + self.train_y_mean
+                    matrix = realValuesMatrix * self.train_y_std + self.train_y_mean
                     error = middle_error(output, matrix, self.isClassification)
                 print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
             else :
