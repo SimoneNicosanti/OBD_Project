@@ -16,6 +16,9 @@ def crossValidate(
         max_steps : int, 
         with_SAGA : bool, 
         method : StepEnum, 
+        lambda_L1 : float,
+        lambda_L2 : float,
+        show_error : bool = False,
         crossValidation : bool = False) -> NeuralNetwork :
 
     featuresNumber = X_train.shape[1]
@@ -33,8 +36,8 @@ def crossValidate(
     if (not crossValidation) :
         numberLayers = 2
         numberNeurons = [defaultNeuronNumber] * numberLayers
-        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method)
-        gradient_norm_array, error_array = model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
+        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambda_L1, lambda_L2)
+        gradient_norm_array, error_array = model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error)
         writeAllNormLog(gradient_norm_array)
         writeErrorLog(error_array)
         return model
@@ -50,8 +53,8 @@ def crossValidate(
         numberNeurons = total_combinations[i]
         numberLayers = len(numberNeurons)
         print("Model: ", numberNeurons)
-        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method)
-        model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA) 
+        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambda_L1, lambda_L2)
+        model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error) 
         accuracy_validation, _ = model.predict(X_valid, Y_valid)
 
         print("Model: ", numberNeurons, accuracy_validation)
@@ -69,7 +72,7 @@ def crossValidate(
     return best_model
 
 
-def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNumArray : list, X_train, Y_train, X_valid, Y_valid, max_steps : int, with_SAGA : bool, method : StepEnum, crossValidation : bool = False) -> NeuralNetwork :
+def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNumArray : list, X_train, Y_train, X_valid, Y_valid, max_steps : int, with_SAGA : bool, method : StepEnum, lambda_L1 : float, lambda_L2 : float, crossValidation : bool = False, show_error : bool = False) -> NeuralNetwork :
 
     featuresNumber = X_train.shape[1]
     if (isClassification) :
@@ -84,8 +87,8 @@ def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNu
     if (not crossValidation) :
         numberLayers = 3
         numberNeurons = [100] * numberLayers
-        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method)
-        model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA)
+        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambda_L1, lambda_L2)
+        model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error)
         return model
  
     best_accuracy = 0.0
@@ -104,7 +107,7 @@ def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNu
     thread_array : list[Thread] = [None] * thread_num
     for thread_index in range(0, thread_num) :
         thread_slice = thread_slices[thread_index]
-        thread_array[thread_index] = Thread(target = thread_function, args = [X_train, Y_train, X_valid, Y_valid, featuresNumber, labelsNumber, isClassification, max_steps, with_SAGA, method, thread_index, thread_slice, thread_best_model_list])
+        thread_array[thread_index] = Thread(target = thread_function, args = [X_train, Y_train, X_valid, Y_valid, featuresNumber, labelsNumber, isClassification, max_steps, with_SAGA, method, show_error, thread_index, thread_slice, thread_best_model_list])
         thread_array[thread_index].start()
 
     start = time.time()
@@ -151,6 +154,9 @@ def thread_function(
         max_steps : int,
         with_SAGA : bool,
         method : StepEnum,
+        lambda_L1 : float,
+        lambda_L2 : float,
+        show_error : bool,
         thread_index : int, 
         thread_configuration_list : list, 
         thread_best_model_list : list
@@ -159,8 +165,8 @@ def thread_function(
     best_accuracy = 0.0
     best_model : NeuralNetwork = None
     for configuration in thread_configuration_list :
-        model : NeuralNetwork = NeuralNetwork(len(configuration), featuresNumber, labelsNumber, configuration, isClassification, method)
-        model.fit(X_train, Y_train, max_steps = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA) 
+        model : NeuralNetwork = NeuralNetwork(len(configuration), featuresNumber, labelsNumber, configuration, isClassification, method, lambda_L1, lambda_L2)
+        model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error) 
         accuracy_validation, _ = model.predict(X_valid, Y_valid)
 
         print(thread_index, configuration, accuracy_validation)

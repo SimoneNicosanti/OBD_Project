@@ -3,7 +3,7 @@ from Utils import *
 
 class Layer :
 
-    def __init__(self, neuronNumber : int) -> None :
+    def __init__(self, neuronNumber : int, lambda_L1 : float, lambda_L2 : float) -> None :
         self.neuronNumber = neuronNumber
         self.prevLayer = None
         self.nextLayer = None
@@ -11,6 +11,8 @@ class Layer :
         self.biasArray : np.ndarray = np.zeros(neuronNumber)
         self.aArray : np.ndarray = np.zeros(neuronNumber)
         self.outputArray : np.ndarray = np.zeros(neuronNumber)
+        self.lambda_L1 : float = lambda_L1
+        self.lambda_L2 : float = lambda_L2
 
     def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
         self.prevLayer = prevLayer
@@ -50,9 +52,9 @@ class Layer :
             for i in range(0, self.prevLayer.neuronNumber + 1) :
                 gradient_esteem_elem = esteem_subset[j * (self.prevLayer.neuronNumber + 1) + i]
                 if (i == self.prevLayer.neuronNumber) :
-                    self.biasArray[j] -= alpha * gradient_esteem_elem
+                    self.biasArray[j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.biasArray[j])
                 else :
-                    self.weightMatrix[i][j] -= alpha * gradient_esteem_elem
+                    self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + 2 * self.lambda_L2 * self.weightMatrix[i][j])
         
     def getOutput(self) -> np.ndarray :
         return self.outputArray

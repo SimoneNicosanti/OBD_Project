@@ -9,7 +9,7 @@ from CrossValidator import *
 def main() :
     np.random.seed(123456)
 
-    dataset_name = "MNIST"
+    dataset_name = "Cancer"
 
     dataset_info = dataset_dict[dataset_name]
     dataset = pd.read_csv(dataset_info["fileName"])
@@ -26,10 +26,13 @@ def main() :
     
     layerNumArray : list = [2, 3]
     neuronNumArray : list = [64, 128, 256]
+    lambda_L1 = 0.0
+    lambda_L2 = 0.01
     crossValidation = False
-    method = StepEnum.NADAM
-    max_steps = 1
+    method = StepEnum.DIMINISHING
+    epochs = 10
     with_SAGA = False
+    show_error = False
     model = crossValidate(
         isClassification, 
         layerNumArray, 
@@ -38,9 +41,12 @@ def main() :
         Y_train, 
         X_valid, 
         Y_valid,
-        max_steps,
+        epochs,
         with_SAGA,
         method,
+        lambda_L1,
+        lambda_L2,
+        show_error,
         crossValidation = crossValidation
     )
 
@@ -48,8 +54,8 @@ def main() :
     accuracy_generalization, generalizationPredictionArray = model.predict(X_test, Y_test)
     writeClassificationLog("Training", dataset_name, trainingPredictionArray)
     writeClassificationLog("Generalization", dataset_name, generalizationPredictionArray)
-    writeAccuracyLog("Training", dataset_name, accuracy_trainining, max_steps, with_SAGA, method)
-    writeAccuracyLog("Generalization", dataset_name, accuracy_generalization, max_steps, with_SAGA, method)
+    writeAccuracyLog("Training", dataset_name, accuracy_trainining, epochs, with_SAGA, method)
+    writeAccuracyLog("Generalization", dataset_name, accuracy_generalization, epochs, with_SAGA, method)
 
     print("Training Accuracy: ", accuracy_trainining)
     print("Generalization Accuracy:", accuracy_generalization)

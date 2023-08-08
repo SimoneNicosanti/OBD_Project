@@ -6,13 +6,13 @@ from StepEnum import *
 
 class NeuralNetwork :
 
-    def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNumArray : np.ndarray, isClassification : bool = True, method : StepEnum = StepEnum.RMSPROP) -> None:
+    def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNumArray : np.ndarray, isClassification : bool = True, method : StepEnum = StepEnum.RMSPROP, lambda_L1 : float = 0.0, lambda_L2 : float = 0.0) -> None:
     
         self.isClassification : bool = isClassification
         self.hiddenLayerNum : int = hiddenLayerNum
 
-        self.firstLayer : Layer = self.__switch(inputDim, method)
-        self.lastLayer : Layer = self.__switch(outputDim, method)
+        self.firstLayer : Layer = self.__switch(inputDim, method, lambda_L1, lambda_L2)
+        self.lastLayer : Layer = self.__switch(outputDim, method, lambda_L1, lambda_L2)
 
         self.train_mean : np.ndarray = None
         self.train_std : float = 1
@@ -29,7 +29,7 @@ class NeuralNetwork :
             elif (i == hiddenLayerNum + 1) :
                 nextLayer = None
             else :
-                nextLayer = self.__switch(neuronNumArray[i], method)
+                nextLayer = self.__switch(neuronNumArray[i], method, lambda_L1, lambda_L2)
 
             currLayer.setPrevAndNextLayer(prevLayer, nextLayer)
             prevLayer = currLayer
@@ -37,19 +37,19 @@ class NeuralNetwork :
 
         return
 
-    def __switch(self, neuronNum : int, method : StepEnum) -> Layer :
+    def __switch(self, neuronNum : int, method : StepEnum, lambda_L1 : float, lambda_L2 : float) -> Layer :
         if method == StepEnum.ADAGRAD :
-            return AdaGradLayer(neuronNum)
+            return AdaGradLayer(neuronNum, lambda_L1, lambda_L2)
         elif method == StepEnum.RMSPROP :
-            return RMSPropLayer(neuronNum)
+            return RMSPropLayer(neuronNum, lambda_L1, lambda_L2)
         elif method == StepEnum.ADAM :
-            return AdamLayer(neuronNum)
+            return AdamLayer(neuronNum, lambda_L1, lambda_L2)
         elif method == StepEnum.NADAM :
-            return NadamLayer(neuronNum)
+            return NadamLayer(neuronNum, lambda_L1, lambda_L2)
         elif method == StepEnum.ADADELTA : 
-            return AdaDeltaLayer(neuronNum)
+            return AdaDeltaLayer(neuronNum, lambda_L1, lambda_L2)
         else :
-            return Layer(neuronNum)
+            return Layer(neuronNum, lambda_L1, lambda_L2)
         
     
     def predict(self, X_test : np.ndarray, Y_test : np.ndarray) -> np.ndarray :
@@ -182,14 +182,14 @@ class NeuralNetwork :
 
         return np.array(de_dw)
 
-    def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4, with_SAGA = False) -> tuple[list, list] :
+    def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, with_SAGA = False, show_error = False) -> tuple[list, list] :
 
         if (with_SAGA) :
-            return self.__fit_saga(X_train, Y_train, epsilon, max_steps)
+            return self.__fit_saga(X_train, Y_train, epsilon, epochs, show_error)
         else :
-            return self.__fit_dyn_sample(X_train, Y_train, epsilon, max_steps)
+            return self.__fit_dyn_sample(X_train, Y_train, epsilon, epochs, show_error)
         
-    def __fit_dyn_sample(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e4) -> tuple[list, list] :
+    def __fit_dyn_sample(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, show_error = False) -> tuple[list, list] :
 
         numpyLabels : np.ndarray = np.array(Y_train)
         uniqueLables = np.unique(numpyLabels)
@@ -201,7 +201,6 @@ class NeuralNetwork :
 
         if (self.isClassification) :
             normalized_Y_train = Y_train
-
             sortedLabelsMatrix = np.tile(sortedLabels, (X_train.shape[0], 1))
             labelsMatrix = np.tile(Y_train.T, (sortedLabels.shape[0], 1)).T
             realValuesMatrix = (sortedLabelsMatrix == labelsMatrix).astype(int)
@@ -209,7 +208,6 @@ class NeuralNetwork :
             self.train_y_mean = Y_train.mean(axis = 0)
             self.train_y_std = Y_train.std(axis = 0)
             normalized_Y_train = (Y_train - self.train_y_mean) / self.train_y_std
-
             realValuesMatrix = normalized_Y_train[:, np.newaxis]
             
         gradient_norm = epsilon
@@ -219,10 +217,8 @@ class NeuralNetwork :
         
         k = 1
         while (gradient_norm >= epsilon and k <= epochs) :
-            # TODO : Scelta della dimensione del mini-batch
 
-            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
-            #mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(2 ^ (5 + k)), len(normalized_X_train))
+            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/32 * len(normalized_X_train) + k), len(normalized_X_train)))
             mini_batch_train = normalized_X_train[mini_batch_indexes]
 
             self.do_forwarding(mini_batch_train)
@@ -231,20 +227,22 @@ class NeuralNetwork :
                 
             gradientSquaredNorm = self.backpropagation_dataset(batchRealValuesMatrix, k)
             gradient_norm = np.sqrt(gradientSquaredNorm)
-
-            #self.do_forwarding(normalized_X_train)
-
-            #if (self.isClassification) :
-            #    error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
-            #else :
-            #    output = self.lastLayer.getOutput() * self.train_y_std + self.train_y_mean
-            #    matrix = realValuesMatrix * self.train_y_std + self.train_y_mean
-            #    error = middle_error(output, matrix, self.isClassification)
-               
-            #error_array.append(error)
-            error = 0
-            print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
             gradient_norm_array.append(gradient_norm)
+
+            if (show_error) :
+                self.do_forwarding(normalized_X_train)
+
+                if (self.isClassification) :
+                    error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
+                else :
+                    output = self.lastLayer.getOutput() * self.train_y_std + self.train_y_mean
+                    matrix = realValuesMatrix * self.train_y_std + self.train_y_mean
+                    error = middle_error(output, matrix, self.isClassification)
+                print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
+            else :
+                error = 0
+                print("Gradient's norm: ", gradient_norm, "--", "Epoch: ", k)
+            error_array.append(error)
 
             samples_seen[mini_batch_indexes] = 1
             if (np.all(samples_seen == 1)) :
@@ -253,8 +251,7 @@ class NeuralNetwork :
 
         return gradient_norm_array, error_array
 
-    # TODO : impostare flag per la visualizzazione dell'errore
-    def __fit_saga(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, max_steps = 1e4) -> list :
+    def __fit_saga(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, show_error = False) -> tuple[list, list] :
 
         numpyLabels : np.ndarray = np.array(Y_train)
         uniqueLables = np.unique(numpyLabels)
@@ -276,16 +273,12 @@ class NeuralNetwork :
         gradient_norm_array = []
         error_array = []
         
-        k = 0
-        while (gradient_norm >= epsilon and k <= max_steps) :
+        k = 1
+        while (gradient_norm >= epsilon and k <= epochs) :
 
-            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/25 * len(normalized_X_train) + k), len(normalized_X_train)))
+            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/32 * len(normalized_X_train) + k), len(normalized_X_train)))
             mini_batch_train = normalized_X_train[mini_batch_indexes]
             mini_batch_labels = normalized_Y_train[mini_batch_indexes]
-
-            self.do_forwarding(mini_batch_train)
-
-            sagaIndex = np.random.randint(0, len(mini_batch_indexes))
 
             self.do_forwarding(mini_batch_train)
 
@@ -307,14 +300,27 @@ class NeuralNetwork :
             
             accumulatorSAGA[sagaIndex] = de_dw
 
-            # TODO : Calcolo errore
-
             gradient_norm = np.linalg.norm(gradient_esteem)
             gradient_norm_array.append(gradient_norm)
-            print("Gradient's norm: ", gradient_norm, "--", "K: ", k)
-            k += 1
+
+            # TODO : da rivedere il calcolo dell'errore per il SAGA
+            if (show_error) :
+                self.do_forwarding(normalized_X_train)
+
+                if (self.isClassification) :
+                    error = middle_error(self.lastLayer.getOutput()[:, np.newaxis][sagaIndex], elemLabelsArray[:, np.newaxis], self.isClassification)
+                else :
+                    output = self.lastLayer.getOutput()[:, np.newaxis][sagaIndex] * self.train_y_std + self.train_y_mean
+                    matrix = elemLabelsArray[:, np.newaxis] * self.train_y_std + self.train_y_mean
+                    error = middle_error(output, matrix, self.isClassification)
+                print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
+            else :
+                error = 0
+                print("Gradient's norm: ", gradient_norm, "--", "Epoch: ", k)
+            error_array.append(error)
 
             self.update_weights(gradient_esteem, k)
+            k += 1
 
         return gradient_norm_array, error_array
 
