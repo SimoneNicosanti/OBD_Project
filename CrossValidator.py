@@ -5,11 +5,13 @@ from threading import *
 import time
 from LogWriter import *
 
-# TODO : cross validation sui fattori di regolarizzazione
+# TODO : verificare cross validation
 def crossValidate(
         isClassification : bool, 
         layerNumArray : list, 
         neuronNumArray : list,
+        lambdaL1Array : list,
+        lambdaL2Array : list,
         X_train,
         Y_train, 
         X_valid, 
@@ -17,8 +19,8 @@ def crossValidate(
         max_steps : int, 
         with_SAGA : bool, 
         method : StepEnum, 
-        lambda_L1 : float,
-        lambda_L2 : float,
+        lambdaL1 : float,
+        lambdaL2 : float,
         show_error : bool = False,
         crossValidation : bool = False) -> NeuralNetwork :
 
@@ -37,7 +39,7 @@ def crossValidate(
     if (not crossValidation) :
         numberLayers = 2
         numberNeurons = [defaultNeuronNumber] * numberLayers
-        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambda_L1, lambda_L2)
+        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambdaL1, lambdaL2)
         gradient_norm_array, error_array = model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error)
         writeAllNormLog(gradient_norm_array)
         writeErrorLog(error_array)
@@ -53,12 +55,24 @@ def crossValidate(
     for i in range(0, len(total_combinations)) :
         numberNeurons = total_combinations[i]
         numberLayers = len(numberNeurons)
-        print("Model: ", numberNeurons)
-        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambda_L1, lambda_L2)
-        model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error) 
-        accuracy_validation, _ = model.predict(X_valid, Y_valid)
+        if (len(lambdaL1Array) == 0) :
+            for j in range(0, len(lambdaL2Array)) :
+                model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, 0, lambdaL2Array[j])
+                model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error) 
+                accuracy_validation, _ = model.predict(X_valid, Y_valid)
+                print("Model: ", numberNeurons, "--", "Accuracy validation: ", accuracy_validation, "--", "lambdaL2: ", lambdaL2Array[j])
 
-        print("Model: ", numberNeurons, accuracy_validation)
+        elif (len(lambdaL2Array) == 0) :
+            for j in range(0, len(lambdaL1Array)) :
+                model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambdaL1Array[j], 0)
+                model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error) 
+                accuracy_validation, _ = model.predict(X_valid, Y_valid)
+                print("Model: ", numberNeurons, "--", "Accuracy validation: ", accuracy_validation, "--", "lambdaL1: ", lambdaL1Array[j])
+        else :
+            model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambdaL1, lambdaL2)
+            model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error) 
+            accuracy_validation, _ = model.predict(X_valid, Y_valid)
+            print("Model: ", numberNeurons, "--", "Accuracy validation: ", accuracy_validation)
 
         if (accuracy_validation >= best_accuracy) :
             best_accuracy = accuracy_validation
@@ -66,14 +80,29 @@ def crossValidate(
 
     end = time.time()
 
-    print(end - start)
+    print("Time: ", end - start)
 
     print("Best accuracy: ", best_accuracy)
 
     return best_model
 
 
-def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNumArray : list, X_train, Y_train, X_valid, Y_valid, max_steps : int, with_SAGA : bool, method : StepEnum, lambda_L1 : float, lambda_L2 : float, crossValidation : bool = False, show_error : bool = False) -> NeuralNetwork :
+def crossValidate_thread(
+        isClassification : bool, 
+        layerNumArray : list, 
+        neuronNumArray : list, 
+        lambdaL1Array : list,
+        lambdaL2Array : list,
+        X_train, Y_train, 
+        X_valid, Y_valid, 
+        epochs : int, 
+        with_SAGA : bool, 
+        method : StepEnum, 
+        lambdaL1 : float, 
+        lambdaL2 : float, 
+        show_error : bool = False,
+        crossValidation : bool = False
+        ) -> NeuralNetwork :
 
     featuresNumber = X_train.shape[1]
     if (isClassification) :
@@ -88,8 +117,8 @@ def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNu
     if (not crossValidation) :
         numberLayers = 3
         numberNeurons = [100] * numberLayers
-        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambda_L1, lambda_L2)
-        model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error)
+        model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambdaL1, lambdaL2)
+        model.fit(X_train, Y_train, epochs = epochs, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error)
         return model
  
     best_accuracy = 0.0
@@ -108,7 +137,7 @@ def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNu
     thread_array : list[Thread] = [None] * thread_num
     for thread_index in range(0, thread_num) :
         thread_slice = thread_slices[thread_index]
-        thread_array[thread_index] = Thread(target = thread_function, args = [X_train, Y_train, X_valid, Y_valid, featuresNumber, labelsNumber, isClassification, max_steps, with_SAGA, method, show_error, thread_index, thread_slice, thread_best_model_list])
+        thread_array[thread_index] = Thread(target = thread_function, args = [X_train, Y_train, X_valid, Y_valid, featuresNumber, labelsNumber, lambdaL1Array, lambdaL2Array, isClassification, epochs, with_SAGA, method, lambdaL1, lambdaL2, show_error, thread_index, thread_slice, thread_best_model_list])
         thread_array[thread_index].start()
 
     start = time.time()
@@ -116,7 +145,7 @@ def crossValidate_thread(isClassification : bool, layerNumArray : list, neuronNu
         thread.join()
     end = time.time()
 
-    print(end - start)
+    print("Time: ", end - start)
 
     for thread_index in range(0, thread_num) :
         thread_result = thread_best_model_list[thread_index]
@@ -149,12 +178,14 @@ def thread_function(
         Y_valid : np.ndarray,
         featuresNumber : int,
         labelsNumber : int,
+        lambdaL1Array : list,
+        lambdaL2Array : list,
         isClassification : bool,
         max_steps : int,
         with_SAGA : bool,
         method : StepEnum,
-        lambda_L1 : float,
-        lambda_L2 : float,
+        lambdaL1 : float,
+        lambdaL2 : float,
         show_error : bool,
         thread_index : int, 
         thread_configuration_list : list, 
@@ -164,11 +195,25 @@ def thread_function(
     best_accuracy = 0.0
     best_model : NeuralNetwork = None
     for configuration in thread_configuration_list :
-        model : NeuralNetwork = NeuralNetwork(len(configuration), featuresNumber, labelsNumber, configuration, isClassification, method, lambda_L1, lambda_L2)
-        model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error) 
-        accuracy_validation, _ = model.predict(X_valid, Y_valid)
+        if (len(lambdaL1Array) == 0) :
+            for j in range(0, len(lambdaL2Array)) :
+                model : NeuralNetwork = NeuralNetwork(len(configuration), featuresNumber, labelsNumber, configuration, isClassification, method, 0, lambdaL2Array[j])
+                model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error) 
+                accuracy_validation, _ = model.predict(X_valid, Y_valid)
+                print("Thread: ", thread_index, "Model: ", configuration, "--", "Accuracy validation: ", accuracy_validation, "--", "lambdaL2: ", lambdaL2Array[j])
 
-        print(thread_index, configuration, accuracy_validation)
+        if (len(lambdaL2Array) == 0) :
+            for j in range(0, len(lambdaL1Array)) :
+                model : NeuralNetwork = NeuralNetwork(len(configuration), featuresNumber, labelsNumber, configuration, isClassification, method, lambdaL1Array[j], 0)
+                model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error) 
+                accuracy_validation, _ = model.predict(X_valid, Y_valid)
+                print("Thread: ", thread_index, "Model: ", configuration, "--", "Accuracy validation: ", accuracy_validation, "--", "lambdaL1: ", lambdaL1Array[j])
+
+        else :
+            model : NeuralNetwork = NeuralNetwork(len(configuration), featuresNumber, labelsNumber, configuration, isClassification, method, lambdaL1, lambdaL2)
+            model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error) 
+            accuracy_validation, _ = model.predict(X_valid, Y_valid)
+            print("Thread: ", thread_index, "Model: ", configuration, "--", "Accuracy validation: ", accuracy_validation)
 
         if (accuracy_validation >= best_accuracy) :
             best_accuracy = accuracy_validation

@@ -7,7 +7,6 @@ def diamonds_preprocess(diamondsDataset : pd.DataFrame) :
 def spaceship_preprocess(spaceshipDataset : pd.DataFrame) :
     spaceshipDataset["Platform"] = spaceshipDataset["Cabin"].str.slice(0,1)
 
-
 dataset_dict = {
     
     "Cancer" : {

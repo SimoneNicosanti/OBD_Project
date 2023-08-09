@@ -1,10 +1,11 @@
 import pandas as pd
 from Utils import *
 from LogWriter import *
-from NeuralNetwork import NeuralNetwork
 from DatasetInfo import dataset_dict
 from StepEnum import *
 from CrossValidator import *
+
+# TODO : tipizzare tutte le variabili ed i return delle funzioni
 
 def main() :
     np.random.seed(123456)
@@ -24,30 +25,32 @@ def main() :
 
     X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetSplit(dataset = dataset, targetName = targetName, targetDrop = toDrop, targetOHE = toOHE)
     
-    layerNumArray : list = [2, 3]
-    neuronNumArray : list = [64, 128, 256]
-    lambda_L1 = 0.0
-    lambda_L2 = 0.00001
+    layerNumArray : list = [2]
+    neuronNumArray : list = [32, 64]
+    lambdaL1Array : list = []
+    lambdaL2Array : list = [1e-3, 1e-2, 1e-1, 0.0, 1e0, 1e1]
+    lambdaL1 = 0.0
+    lambdaL2 = 1e-3
     crossValidation = False
     method = StepEnum.NADAM
-    epochs = 100
-    with_SAGA = True
+    epochs = 10
+    with_SAGA = False
     show_error = False
     model = crossValidate(
         isClassification, 
         layerNumArray, 
         neuronNumArray, 
-        X_train, 
-        Y_train, 
-        X_valid, 
-        Y_valid,
+        lambdaL1Array,
+        lambdaL2Array,
+        X_train, Y_train, 
+        X_valid, Y_valid,
         epochs,
         with_SAGA,
         method,
-        lambda_L1,
-        lambda_L2,
+        lambdaL1,
+        lambdaL2,
         show_error,
-        crossValidation = crossValidation
+        crossValidation
     )
 
     accuracy_trainining, trainingPredictionArray = model.predict(X_train, Y_train)

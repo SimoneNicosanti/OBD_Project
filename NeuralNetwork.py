@@ -6,13 +6,13 @@ from StepEnum import *
 
 class NeuralNetwork :
 
-    def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNumArray : np.ndarray, isClassification : bool = True, method : StepEnum = StepEnum.RMSPROP, lambda_L1 : float = 0.0, lambda_L2 : float = 0.0) -> None:
+    def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNumArray : np.ndarray, isClassification : bool = True, method : StepEnum = StepEnum.RMSPROP, lambdaL1 : float = 0.0, lambdaL2 : float = 0.0) -> None:
     
         self.isClassification : bool = isClassification
         self.hiddenLayerNum : int = hiddenLayerNum
 
-        self.firstLayer : Layer = self.__switch(inputDim, method, lambda_L1, lambda_L2)
-        self.lastLayer : Layer = self.__switch(outputDim, method, lambda_L1, lambda_L2)
+        self.firstLayer : Layer = self.__switch(inputDim, method, lambdaL1, lambdaL2)
+        self.lastLayer : Layer = self.__switch(outputDim, method, lambdaL1, lambdaL2)
 
         self.train_mean : np.ndarray = None
         self.train_std : float = 1
@@ -29,7 +29,7 @@ class NeuralNetwork :
             elif (i == hiddenLayerNum + 1) :
                 nextLayer = None
             else :
-                nextLayer = self.__switch(neuronNumArray[i], method, lambda_L1, lambda_L2)
+                nextLayer = self.__switch(neuronNumArray[i], method, lambdaL1, lambdaL2)
 
             currLayer.setPrevAndNextLayer(prevLayer, nextLayer)
             prevLayer = currLayer
@@ -37,19 +37,19 @@ class NeuralNetwork :
 
         return
 
-    def __switch(self, neuronNum : int, method : StepEnum, lambda_L1 : float, lambda_L2 : float) -> Layer :
+    def __switch(self, neuronNum : int, method : StepEnum, lambdaL1 : float, lambdaL2 : float) -> Layer :
         if method == StepEnum.ADAGRAD :
-            return AdaGradLayer(neuronNum, lambda_L1, lambda_L2)
+            return AdaGradLayer(neuronNum, lambdaL1, lambdaL2)
         elif method == StepEnum.RMSPROP :
-            return RMSPropLayer(neuronNum, lambda_L1, lambda_L2)
+            return RMSPropLayer(neuronNum, lambdaL1, lambdaL2)
         elif method == StepEnum.ADAM :
-            return AdamLayer(neuronNum, lambda_L1, lambda_L2)
+            return AdamLayer(neuronNum, lambdaL1, lambdaL2)
         elif method == StepEnum.NADAM :
-            return NadamLayer(neuronNum, lambda_L1, lambda_L2)
+            return NadamLayer(neuronNum, lambdaL1, lambdaL2)
         elif method == StepEnum.ADADELTA : 
-            return AdaDeltaLayer(neuronNum, lambda_L1, lambda_L2)
+            return AdaDeltaLayer(neuronNum, lambdaL1, lambdaL2)
         else :
-            return Layer(neuronNum, lambda_L1, lambda_L2)
+            return Layer(neuronNum, lambdaL1, lambdaL2)
         
     
     def predict(self, X_test : np.ndarray, Y_test : np.ndarray) -> np.ndarray :
@@ -83,7 +83,6 @@ class NeuralNetwork :
                 maxProbIndex = probs.argmax()
                 predictions = np.zeros(probs.shape[1])
                 predictions[maxProbIndex] = 1
-                
 
                 realClassIndex = elemLabelsArray.argmax()
                 if (predictions[realClassIndex] == 1) :
@@ -99,7 +98,7 @@ class NeuralNetwork :
 
         return accuracy, predictionArray
     
-    def do_forwarding(self, input) :
+    def do_forwarding(self, input) -> None :
         layer : Layer = self.firstLayer
         layer.forwardPropagation(input)
         layer = layer.nextLayer
