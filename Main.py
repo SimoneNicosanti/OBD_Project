@@ -10,7 +10,7 @@ from CrossValidator import *
 def main() :
     np.random.seed(123456)
 
-    dataset_name = "Cancer"
+    dataset_name = "Students"
 
     dataset_info = dataset_dict[dataset_name]
     dataset = pd.read_csv(dataset_info["fileName"])
@@ -33,10 +33,10 @@ def main() :
     lambdaL2 = 1e-3
     crossValidation = False
     method = StepEnum.NADAM
-    epochs = 10
+    epochs = 1000
     with_SAGA = False
-    show_error = False
-    model = crossValidate(
+    show_error = True
+    model, gradient_norm_array, error_array = crossValidate(
         isClassification, 
         layerNumArray, 
         neuronNumArray, 
@@ -53,6 +53,9 @@ def main() :
         crossValidation
     )
 
+    writeAllNormLog(gradient_norm_array)
+    writeErrorLog(error_array)
+
     accuracy_trainining, trainingPredictionArray = model.predict(X_train, Y_train)
     accuracy_generalization, generalizationPredictionArray = model.predict(X_test, Y_test)
     writeClassificationLog("Training", dataset_name, trainingPredictionArray)
@@ -63,16 +66,19 @@ def main() :
     print("Training Accuracy: ", accuracy_trainining)
     print("Generalization Accuracy:", accuracy_generalization)
 
-    # TODO : istogramma dei residui per problemi di regressione
-
-    normDataFrame = pd.read_csv("./log/NormLog.csv")
+    normDataFrame = pd.read_csv("./log/" + dataset_name + "NormLog.csv")
     cartesian_plot(normDataFrame["K"], normDataFrame["Norm"], "Numero di iterazioni", "Norma del gradiente", "Norma del gradiente in funzione del numero di iterazioni")
 
-    errorDataFrame = pd.read_csv("./log/ErrorLog.csv")
+    errorDataFrame = pd.read_csv("./log/" + dataset_name + "ErrorLog.csv")
     cartesian_plot(errorDataFrame["K"], errorDataFrame["Error"], "Iterazione", "Errore", "ERRORE NEL NUMERO DI ITERAZIONI")
 
     bar_plot(["Training Accuracy", "Generalization Accuracy"], [accuracy_trainining, accuracy_generalization], "Type of accuracy", "Accuracy", "Bar plot for accuracies")
     pie_plot([len(X_train), len(X_valid), len(X_test)], ["Training Set", "Validation Set", "Test Set"], "Ripartizione dataset")
+
+    if (not isClassification) :
+        regression_results = pd.read_csv("./log/" + dataset_name + "/Generalization_Results.csv")
+        residual = regression_results["Real"] - regression_results["Classified"]
+        residual_plot(residual, dataset_name)
 
 if __name__ == "__main__" :
     main()

@@ -92,7 +92,7 @@ class NeuralNetwork :
                 elemLabelsArray = elemLabel * self.train_y_std + self.train_y_mean
                 accuracy += squaredErrorFunction(predictions, elemLabelsArray)
 
-            predictionArray.append([predictions, elemLabelsArray])
+            predictionArray.append([predictions[0][0], elemLabelsArray])
 
         accuracy /= X_test.shape[0]
 
@@ -187,7 +187,8 @@ class NeuralNetwork :
             return self.__fit_saga(X_train, Y_train, epsilon, epochs, show_error)
         else :
             return self.__fit_dyn_sample(X_train, Y_train, epsilon, epochs, show_error)
-        
+    
+    ## TODO : Gestire bene la differenza tra k e iter_num
     def __fit_dyn_sample(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, show_error = False) -> tuple[list, list] :
 
         numpyLabels : np.ndarray = np.array(Y_train)
@@ -215,16 +216,25 @@ class NeuralNetwork :
         samples_seen = np.zeros(len(normalized_X_train))
         
         k = 1
+        iter_num = 1
+        threshold = 500
         while (gradient_norm >= epsilon and k <= epochs) :
+            mini_batch_dim = min(int(1/16 * len(normalized_X_train) + iter_num), len(normalized_X_train))
 
-            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/32 * len(normalized_X_train) + k), len(normalized_X_train)))
+            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), mini_batch_dim)
+            # not_seen_num = np.sum(samples_seen[mini_batch_indexes] == 0)
+            # if (not_seen_num < threshold) :
+            #     not_seen_indexes = np.random.choice(np.argwhere(samples_seen == 0).flatten(), threshold)
+            #     seen_indexes = np.random.choice(np.argwhere(samples_seen == 1).flatten(), mini_batch_dim - threshold)
+            #     mini_batch_indexes = np.concatenate((not_seen_indexes, seen_indexes))
+
             mini_batch_train = normalized_X_train[mini_batch_indexes]
 
             self.do_forwarding(mini_batch_train)
 
             batchRealValuesMatrix = realValuesMatrix[mini_batch_indexes]
                 
-            gradientSquaredNorm = self.backpropagation_dataset(batchRealValuesMatrix, k)
+            gradientSquaredNorm = self.backpropagation_dataset(batchRealValuesMatrix, iter_num)
             gradient_norm = np.sqrt(gradientSquaredNorm)
             gradient_norm_array.append(gradient_norm)
 
@@ -240,12 +250,15 @@ class NeuralNetwork :
                 print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
             else :
                 error = 0
-                print("Gradient's norm: ", gradient_norm, "--", "Epoch: ", k)
+                print("Gradient's norm: ", gradient_norm, "--", "Epoch: ", k, "-- Iter: ", iter_num)
             error_array.append(error)
 
+            iter_num += 1
             samples_seen[mini_batch_indexes] = 1
+
             if (np.all(samples_seen == 1)) :
                 k += 1
+                iter_num = 1
                 samples_seen[samples_seen == 1] = 0
 
         return gradient_norm_array, error_array

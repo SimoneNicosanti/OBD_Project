@@ -25,6 +25,14 @@ dataset_dict = {
         "classification" : True
     } ,
 
+    "Cifar" : {
+        "fileName" : "./datasets/Classification_Cifar/dataset.csv",
+        "targetName" : "label",
+        "toDrop" : [] ,
+        "toOHE" : [] ,
+        "classification" : True
+    } ,
+
     "Pistachio" : {
         "fileName" : "./datasets/Classification_Pistachio/pistachio.csv",
         "targetName" : "Class" ,
@@ -110,6 +118,22 @@ dataset_dict = {
     "Concrete" : {
         "fileName" : "./datasets/Regression_Concrete/Concrete.csv",
         "targetName" : "csMPa" ,
+        "toDrop" : [],
+        "toOHE" : [] ,
+        "classification" : False
+    } ,
+
+    "Cars" : {
+        "fileName" : "./datasets/Regression_Car/dataset.csv",
+        "targetName" : "price" ,
+        "toDrop" : ["ID", "name"],
+        "toOHE" : ["fueltypes", "aspiration", "doornumbers", "carbody", "drivewheels", "enginelocation", "enginetype", "cylindernumber", "fuelsystem"] ,
+        "classification" : False
+    } ,
+
+    "Paris" : {
+        "fileName" : "./datasets/Regression_Paris/dataset.csv",
+        "targetName" : "price" ,
         "toDrop" : [],
         "toOHE" : [] ,
         "classification" : False
