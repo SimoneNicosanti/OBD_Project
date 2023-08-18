@@ -6,12 +6,17 @@ import numpy as np
 from scipy.stats import norm
 from StepEnum import *
 
-def initLog() -> None :
-    if (os.path.exists("./log/NormLog.csv")) :
-        os.remove("./log/NormLog.csv")
+def initLog(dataset_name : str) -> None :
+    mainDirectoryPath = "./log/" + dataset_name
+    if (not os.path.exists(mainDirectoryPath)) :
+        os.mkdir(mainDirectoryPath)
+    return mainDirectoryPath
+
 
 def writeAllNormLog(logList : list, dataset_name : str) -> None :
-    filePath = "./log/" + dataset_name + "NormLog.csv"
+    mainDirectoryPath = initLog(dataset_name)
+    
+    filePath = mainDirectoryPath + "/NormLog.csv"
     if (os.path.exists(filePath)) :
         os.remove(filePath)
 
@@ -24,8 +29,11 @@ def writeAllNormLog(logList : list, dataset_name : str) -> None :
         for k in range(0, len(logList)) :
             csvWriter.writerow([k, logList[k]])
 
+
 def writeErrorLog(errorList : list, dataset_name : str) -> None :
-    filePath = "./log/" + dataset_name + "ErrorLog.csv"
+    mainDirectoryPath = initLog(dataset_name)
+    
+    filePath = mainDirectoryPath + "/ErrorLog.csv"
     if (os.path.exists(filePath)) :
         os.remove(filePath)
 
@@ -38,10 +46,9 @@ def writeErrorLog(errorList : list, dataset_name : str) -> None :
         for k in range(0, len(errorList)) :
             csvWriter.writerow([k, errorList[k]])
 
+
 def writeClassificationLog(file_name : str, dataset_name : str, resultsList : list) -> None :
-    mainDirectoryPath = "./log/" + dataset_name
-    if (not os.path.isdir(mainDirectoryPath)) :
-        os.mkdir(mainDirectoryPath)
+    mainDirectoryPath = initLog(dataset_name)
     
     filePath = mainDirectoryPath + "/" + file_name + "_Results.csv"
     if (os.path.exists(filePath)) :
@@ -57,12 +64,11 @@ def writeClassificationLog(file_name : str, dataset_name : str, resultsList : li
         for couple in resultsList :
             csvWriter.writerow([str(couple[0]), str(couple[1])])
 
+
 def writeAccuracyLog(file_name : str, dataset_name : str, accuracy : float, steps_num : int, with_saga : bool, method : StepEnum) :
-    mainDirectoryPath = "./log/" + dataset_name
-    if (not os.path.isdir(mainDirectoryPath)) :
-        os.mkdir(mainDirectoryPath)
-    
+    mainDirectoryPath = initLog(dataset_name)
     filePath = mainDirectoryPath + "/" + file_name + "_Log.csv"
+
     if (not os.path.exists(filePath)) :
         with open(filePath, "+x") as logFile :
             csvWriter = csv.writer(logFile)
@@ -72,7 +78,11 @@ def writeAccuracyLog(file_name : str, dataset_name : str, accuracy : float, step
         csvWriter = csv.writer(logFile)
         csvWriter.writerow([accuracy, steps_num, with_saga, method.name])
 
+
 def residual_plot(residual : pd.DataFrame, dataset_name : str) -> None :
+    mainDirectoryPath = initLog(dataset_name)
+
+    figure, axes = plt.subplots(nrows = 1, ncols = 1, tight_layout = True)
     residual_array = residual.values
     # bins_num = int(np.sqrt(len(residual)))
     mean = residual_array.mean()
@@ -81,19 +91,21 @@ def residual_plot(residual : pd.DataFrame, dataset_name : str) -> None :
     iqr = np.percentile(residual_array, 75) - np.percentile(residual_array, 25)
     bins_num = int((residual_array.max() - residual_array.min()) / (2 * iqr * np.power(len(residual_array), - 1 / 3)))
 
-    plt.hist(residual_array, bins = bins_num, edgecolor = "black", density = True)
+    axes.hist(residual_array, bins = bins_num, edgecolor = "black", density = True, label = "Residual")
 
     x_array = np.linspace(residual_array.min(), residual_array.max(), 10000)
     y_array = norm.pdf(x_array, loc = mean, scale = std_dev)
-    plt.plot(x_array, y_array)
+    axes.plot(x_array, y_array, label = "Normal")
 
-    plt.savefig("./log/" + dataset_name + "/residual_hist")
-    plt.clf()
+    axes.legend()
+
+    figure.savefig(mainDirectoryPath + "/residual_hist")
+    #axes.figure.show()
     # res_hist.figure.savefig("./log/" + dataset_name + "/residual_hist")
 
-def cartesian_plot(x : list, y : list, x_label : str, y_label : str, title : str) -> None :
-    if (not os.path.isdir("./log/plots/")) :
-        os.mkdir("./log/plots/")
+
+def cartesian_plot(x : list, y : list, x_label : str, y_label : str, title : str, dataset_name : str) -> None :
+    mainDirectoryPath = initLog(dataset_name)
     
     plt.figure(figsize = (50, 9), tight_layout = True)
     plt.plot(x,y)
@@ -101,31 +113,34 @@ def cartesian_plot(x : list, y : list, x_label : str, y_label : str, title : str
     plt.ylabel(y_label)
     plt.title(title)
     plt.grid(True)
-    plt.savefig("./log/plots/" + title)
+    plt.savefig(mainDirectoryPath + "/" + title)
     plt.clf()
+    plt.cla()
     return
 
-def bar_plot(x : list, y : list, x_label : str, y_label : str, title : str) -> None :
-    if (not os.path.isdir("./log/plots/")) :
-        os.mkdir("./log/plots/")
+
+def bar_plot(x : list, y : list, x_label : str, y_label : str, title : str, dataset_name : str) -> None :
+    mainDirectoryPath = initLog(dataset_name)
 
     plt.figure(figsize = (9, 9), tight_layout = True)
     plt.bar(x, y, width = 0.6, color = ['red', 'black'])
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(title)
-    plt.savefig("./log/plots/" + title)
+    plt.savefig(mainDirectoryPath + "/" + title)
     plt.clf()
+    plt.cla()
     return
 
-def pie_plot(x: list, y : list, title : str) -> None :
-    if (not os.path.isdir("./log/plots/")) :
-        os.mkdir("./log/plots/")
+
+def pie_plot(x: list, y : list, title : str, dataset_name : str) -> None :
+    mainDirectoryPath = initLog(dataset_name)
         
     plt.figure(figsize = (9, 9), tight_layout = True)
     fig = plt.figure(figsize = (7, 7))
     plt.pie(x, labels = y, autopct = '%1.1f%%')
     plt.title(title)
-    plt.savefig("./log/plots/" + title)
+    plt.savefig(mainDirectoryPath + "/" + title)
     plt.clf()
+    plt.cla()
     return

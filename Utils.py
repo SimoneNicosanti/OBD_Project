@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
 
-def datasetSplit(dataset : pd.DataFrame, targetName : str, targetDrop : list, targetOHE : list, testSetSize : float = 0.2, validationSetSize : float = 0.2) :
+def datasetSplit(dataset : pd.DataFrame, targetName : str, targetDrop : list, targetOHE : list, testSetSize : float = 0.15, validationSetSize : float = 0.15) :
     pre_processed_dataset = dataset.drop(targetName, axis = 1)
     pre_processed_dataset = pre_processed_dataset.drop(targetDrop, axis = 1)
     pre_processed_dataset = oneHotEncoding(pre_processed_dataset, targetOHE)
@@ -30,29 +30,34 @@ def datasetSplit(dataset : pd.DataFrame, targetName : str, targetDrop : list, ta
 
     return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
+
 def oneHotEncoding(dataset : pd.DataFrame, column_names : list) -> pd.DataFrame :
     for column_name in column_names :
-      encoder = OneHotEncoder(sparse=False)
-      encoded = pd.DataFrame(encoder.fit_transform(dataset[[column_name]]))
-      encoded.columns = encoder.get_feature_names_out([column_name])
+        encoder = OneHotEncoder(sparse=False)
+        encoded = pd.DataFrame(encoder.fit_transform(dataset[[column_name]]))
+        encoded.columns = encoder.get_feature_names_out([column_name])
 
-      dataset.drop([column_name], axis = 1, inplace = True)
-      dataset = pd.concat([dataset, encoded], axis = 1)
+        dataset.drop([column_name], axis = 1, inplace = True)
+        dataset = pd.concat([dataset, encoded], axis = 1)
     return dataset
+
 
 def squaredErrorFunction(output : np.ndarray, realValues : np.ndarray) -> np.ndarray :
     return (np.linalg.norm(output - realValues)) ** 2
-    
+
+
 def softmax(output : np.ndarray) -> np.ndarray :
     expon = np.power(np.e, output - output.max(axis = 1, keepdims = True))
     return expon / np.sum(expon, axis = 1, keepdims = True)
+
 
 def derivative_e_y(output : np.ndarray, realValues : np.ndarray, isClassification : bool) -> np.ndarray:
     if (isClassification) :
         return np.squeeze(softmax(output) - realValues)
     else :
         return 2 * (output - realValues)
-    
+
+
 def middle_error(output : np.ndarray, realValuesMatrix : np.ndarray, isClassification : bool) -> float :
     if (isClassification) :
         cross_entropy = - (realValuesMatrix * np.log(softmax(output) + 1e-6))
@@ -60,6 +65,7 @@ def middle_error(output : np.ndarray, realValuesMatrix : np.ndarray, isClassific
     else :
         squared_error = np.linalg.norm(realValuesMatrix - output, axis = 1) ** 2
         return np.sum(squared_error) / realValuesMatrix.shape[0]
+
 
 def diminishing_stepsize(k : int) -> float :
     return 0.001 / (k + 1)

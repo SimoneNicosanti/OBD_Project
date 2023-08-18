@@ -25,14 +25,15 @@ dataset_dict = {
         "classification" : True
     } ,
 
-    "Cifar" : {
-        "fileName" : "./datasets/Classification_Cifar/dataset.csv",
+    "Chinese" : {
+        "fileName" : "./datasets/Classification_Chinese/compressed_dataset.csv",
         "targetName" : "label",
-        "toDrop" : [] ,
+        "toDrop" : ["character"] ,
         "toOHE" : [] ,
         "classification" : True
     } ,
 
+    
     "Pistachio" : {
         "fileName" : "./datasets/Classification_Pistachio/pistachio.csv",
         "targetName" : "Class" ,

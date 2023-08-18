@@ -19,7 +19,9 @@ class Layer :
         self.nextLayer = nextLayer
 
         if (prevLayer != None) :
-            self.weightMatrix = np.random.uniform(1e-5, 0.1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
+            # self.weightMatrix = np.random.uniform(0, 0.1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
+            ## https://towardsdatascience.com/weight-initialization-techniques-in-neural-networks-26c649eb3b78
+            self.weightMatrix = np.random.normal(loc = 0, scale = np.sqrt(2 / (prevLayer.getNeuronNumber() + self.getNeuronNumber())), size = (self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
             self.biasArray = np.zeros(self.getNeuronNumber())
 
     def getNeuronNumber(self) -> int :

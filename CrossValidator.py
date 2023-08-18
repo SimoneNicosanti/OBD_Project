@@ -31,13 +31,14 @@ def crossValidate(
         labelsNumber = 1
 
     defaultNeuronNumber : int = int(2/3 * featuresNumber) + labelsNumber
+    #defaultNeuronNumber = int((featuresNumber + labelsNumber) / 2)
     if (defaultNeuronNumber > 256) :
         defaultNeuronNumber = 128
     if (defaultNeuronNumber not in neuronNumArray) :
         neuronNumArray.append(defaultNeuronNumber)
 
     if (not crossValidation) :
-        numberLayers = 5
+        numberLayers = 2
         numberNeurons = [defaultNeuronNumber] * numberLayers
         model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambdaL1, lambdaL2)
         gradient_norm_array, error_array = model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error)

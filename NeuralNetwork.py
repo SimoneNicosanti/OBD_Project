@@ -91,8 +91,9 @@ class NeuralNetwork :
                 predictions = networkOutput * self.train_y_std + self.train_y_mean
                 elemLabelsArray = elemLabel * self.train_y_std + self.train_y_mean
                 accuracy += squaredErrorFunction(predictions, elemLabelsArray)
+                predictions = predictions[0][0]
 
-            predictionArray.append([predictions[0][0], elemLabelsArray])
+            predictionArray.append([predictions, elemLabelsArray])
 
         accuracy /= X_test.shape[0]
 
@@ -112,7 +113,7 @@ class NeuralNetwork :
     def backpropagation_dataset(self, realValuesMatrix : np.ndarray, k : int) -> float :
 
         de_da_list : list[np.ndarray] = [None] * (self.hiddenLayerNum + 2)
-        de_da_list[-1] = derivative_e_y(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification) * 1 ## Controllato: uguale ad altro caso
+        de_da_list[-1] = derivative_e_y(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification) * 1
         
         currLayer : Layer = self.lastLayer.prevLayer
         i = self.hiddenLayerNum
@@ -128,7 +129,11 @@ class NeuralNetwork :
             prevLayer : Layer = currLayer.prevLayer
             de_da = de_da_list[i]
             da_dw = np.append(prevLayer.getOutput().T, [[-1] * prevLayer.getOutput().shape[0]], axis = 0).T
-            row_wise_outer = np.array([np.outer(de_da[r], da_dw[r]).reshape(-1) for r in range(0, da_dw.shape[0])])
+            #row_wise_outer = np.array([np.outer(de_da[r], da_dw[r]).reshape(-1) for r in range(0, da_dw.shape[0])])
+
+            ## Calcolo del prodotto esterno tra righe con stesso indice usando np.einsum
+            row_wise_tensor : np.ndarray = np.einsum('ij,ik->ijk', de_da, da_dw)
+            row_wise_outer : np.ndarray = row_wise_tensor.reshape((da_dw.shape[0], de_da.shape[1] * da_dw.shape[1]))
 
             dr_dw = row_wise_outer.sum(axis = 0)
             gradientSquaredNormArray.append(np.linalg.norm(dr_dw) ** 2)
@@ -219,7 +224,8 @@ class NeuralNetwork :
         iter_num = 1
         threshold = 500
         while (gradient_norm >= epsilon and k <= epochs) :
-            mini_batch_dim = min(int(1/16 * len(normalized_X_train) + iter_num), len(normalized_X_train))
+            mini_batch_dim = min(int(1/32 * len(normalized_X_train) + iter_num), len(normalized_X_train))
+            # mini_batch_dim = len(normalized_X_train)
 
             mini_batch_indexes = np.random.randint(0, len(normalized_X_train), mini_batch_dim)
             # not_seen_num = np.sum(samples_seen[mini_batch_indexes] == 0)
