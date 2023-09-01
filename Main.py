@@ -4,6 +4,9 @@ from LogWriter import *
 from DatasetInfo import dataset_dict
 from StepEnum import *
 from CrossValidator import *
+import datetime
+from os import environ
+
 
 # TODO : tipizzare tutte le variabili ed i return delle funzioni
 
@@ -26,7 +29,14 @@ def main() :
     if (preprocess_function != None) :
         preprocess_function(dataset)
 
-    X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetSplit(dataset = dataset, targetName = targetName, targetDrop = toDrop, targetOHE = toOHE)
+    X_train, Y_train, X_valid, Y_valid, X_test, Y_test = datasetPreprocess(
+        dataset = dataset, 
+        targetName = targetName, 
+        targetDrop = toDrop, 
+        targetOHE = toOHE, 
+        testSetSize = 0.15, 
+        validationSetSize = 0.15
+    )
     
     layerNumArray : list = [2]
     neuronNumArray : list = [32, 64]
@@ -36,9 +46,11 @@ def main() :
     lambdaL2 = 1e-3
     crossValidation = False
     method = StepEnum.NADAM
-    epochs = 20
+    epochs = 5
     with_SAGA = False
     show_error = False
+    with_replacement = False
+    start = time.time()
     model, gradient_norm_array, error_array = crossValidate(
         isClassification, 
         layerNumArray, 
@@ -53,21 +65,27 @@ def main() :
         lambdaL1,
         lambdaL2,
         show_error,
-        crossValidation
+        crossValidation,
+        with_replacement
     )
+    end = time.time()
+
+    totalTime = str(datetime.timedelta(seconds = end - start))
 
     writeAllNormLog(gradient_norm_array, dataset_name)
-    writeErrorLog(error_array, dataset_name)
+    if (show_error) :
+        writeErrorLog(error_array, dataset_name)
 
     accuracy_trainining, trainingPredictionArray = model.predict(X_train, Y_train)
     accuracy_generalization, generalizationPredictionArray = model.predict(X_test, Y_test)
     writeClassificationLog("Training", dataset_name, trainingPredictionArray)
     writeClassificationLog("Generalization", dataset_name, generalizationPredictionArray)
-    writeAccuracyLog("Training", dataset_name, accuracy_trainining, epochs, with_SAGA, method)
-    writeAccuracyLog("Generalization", dataset_name, accuracy_generalization, epochs, with_SAGA, method)
+    writeAccuracyLog("Training", dataset_name, accuracy_trainining, epochs, with_SAGA, method, totalTime, model.neuronNumArray, with_replacement)
+    writeAccuracyLog("Generalization", dataset_name, accuracy_generalization, epochs, with_SAGA, method, totalTime, model.neuronNumArray, with_replacement)
 
-    print("Training Accuracy: ", accuracy_trainining)
+    print("Training Accuracy:", accuracy_trainining)
     print("Generalization Accuracy:", accuracy_generalization)
+    print("Training Time:", totalTime)
 
     normDataFrame = pd.read_csv("./log/" + dataset_name + "/NormLog.csv")
     cartesian_plot(
@@ -78,14 +96,15 @@ def main() :
         "GRADIENTE NEL NUMERO DI ITERAZIONI",
         dataset_name)
 
-    errorDataFrame = pd.read_csv("./log/" + dataset_name + "/ErrorLog.csv")
-    cartesian_plot(
-        errorDataFrame["K"], 
-        errorDataFrame["Error"], 
-        "Iterazione", 
-        "Errore", 
-        "ERRORE NEL NUMERO DI ITERAZIONI",
-        dataset_name)
+    if (show_error) :
+        errorDataFrame = pd.read_csv("./log/" + dataset_name + "/ErrorLog.csv")
+        cartesian_plot(
+            errorDataFrame["K"], 
+            errorDataFrame["Error"], 
+            "Iterazione", 
+            "Errore", 
+            "ERRORE NEL NUMERO DI ITERAZIONI",
+            dataset_name)
 
     #bar_plot(["Training Accuracy", "Generalization Accuracy"], [accuracy_trainining, accuracy_generalization], "Type of accuracy", "Accuracy", "Bar plot for accuracies")
     #pie_plot([len(X_train), len(X_valid), len(X_test)], ["Training Set", "Validation Set", "Test Set"], "Ripartizione dataset")
@@ -96,6 +115,8 @@ def main() :
         residual_plot(residual, dataset_name)
 
 if __name__ == "__main__" :
+    environ["OMP_NUM_THREADS"] = "4"
+    environ["OPENBLAS_NUM_THREADS"] = "4"
     main()
 
 

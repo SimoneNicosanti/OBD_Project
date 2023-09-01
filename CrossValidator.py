@@ -22,7 +22,8 @@ def crossValidate(
         lambdaL1 : float,
         lambdaL2 : float,
         show_error : bool = False,
-        crossValidation : bool = False) -> NeuralNetwork :
+        crossValidation : bool = False,
+        with_replacement : bool = False) -> NeuralNetwork :
 
     featuresNumber = X_train.shape[1]
     if (isClassification) :
@@ -39,9 +40,9 @@ def crossValidate(
 
     if (not crossValidation) :
         numberLayers = 2
-        numberNeurons = [defaultNeuronNumber] * numberLayers
+        numberNeurons = [512, 512] #[defaultNeuronNumber] * numberLayers
         model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambdaL1, lambdaL2)
-        gradient_norm_array, error_array = model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error)
+        gradient_norm_array, error_array = model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error, with_replacement = with_replacement)
         return model, gradient_norm_array, error_array
 
     total_combinations : list = generate_combinations(neuronNumArray, layerNumArray)

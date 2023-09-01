@@ -3,12 +3,32 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
 
-def datasetSplit(dataset : pd.DataFrame, targetName : str, targetDrop : list, targetOHE : list, testSetSize : float = 0.15, validationSetSize : float = 0.15) :
-    pre_processed_dataset = dataset.drop(targetName, axis = 1)
+## Preelabora il dataset:
+# - Esegue il OneHotEncoding su features categoriche
+# - Rimuove righe aventi delle features nulle
+# - Divide il dataset in Training, Validation e Test set, ritornando per ognuno la matrice delle features e il vettore dei target 
+def datasetPreprocess(dataset : pd.DataFrame, targetName : str, targetDrop : list, targetOHE : list, testSetSize : float = 0.15, validationSetSize : float = 0.15) :
+
+    pre_processed_dataset = dataset
     pre_processed_dataset = pre_processed_dataset.drop(targetDrop, axis = 1)
     pre_processed_dataset = oneHotEncoding(pre_processed_dataset, targetOHE)
     pre_processed_dataset = pre_processed_dataset.dropna(axis = 0)
     
+    validationSet = pre_processed_dataset.groupby(targetName).apply(lambda group: group.sample(frac = validationSetSize))
+    validationSet = validationSet.reset_index(level = 0, drop = True)
+    X_valid, Y_valid = validationSet.drop(targetName, axis = 1).values, validationSet[targetName].values
+    pre_processed_dataset = pre_processed_dataset.drop(index = validationSet.index)
+
+    testingSet = pre_processed_dataset.groupby(targetName).apply(lambda group: group.sample(frac = testSetSize))
+    testingSet = testingSet.reset_index(level = 0, drop = True)
+    X_test, Y_test = testingSet.drop(targetName, axis = 1).values, testingSet[targetName].values
+    pre_processed_dataset = pre_processed_dataset.drop(index = testingSet.index)
+
+    X_train, Y_train = pre_processed_dataset.drop(targetName, axis = 1).values, pre_processed_dataset[targetName].values
+
+    return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
+
+    return 
     featuresMatrix = pre_processed_dataset.values
 
     labelsColumn = dataset[targetName].values
@@ -30,7 +50,9 @@ def datasetSplit(dataset : pd.DataFrame, targetName : str, targetDrop : list, ta
 
     return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
-
+## Esegue il OneHotEncoding del dataset
+# @dataset : DataFrame --> DataFrame di cui fare il OneHotEncoding
+# @column_names : list --> Lista dei nomi delle colonne di cui fare OneHotEncoding
 def oneHotEncoding(dataset : pd.DataFrame, column_names : list) -> pd.DataFrame :
     for column_name in column_names :
         encoder = OneHotEncoder(sparse=False)
@@ -65,7 +87,3 @@ def middle_error(output : np.ndarray, realValuesMatrix : np.ndarray, isClassific
     else :
         squared_error = np.linalg.norm(realValuesMatrix - output, axis = 1) ** 2
         return np.sum(squared_error) / realValuesMatrix.shape[0]
-
-
-def diminishing_stepsize(k : int) -> float :
-    return 0.001 / (k + 1)

@@ -3,11 +3,13 @@ from Layer import *
 from LogWriter import *
 from Utils import *
 from StepEnum import *
+import time
 
 class NeuralNetwork :
 
     def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNumArray : np.ndarray, isClassification : bool = True, method : StepEnum = StepEnum.RMSPROP, lambdaL1 : float = 0.0, lambdaL2 : float = 0.0) -> None:
-    
+
+        self.neuronNumArray = neuronNumArray
         self.isClassification : bool = isClassification
         self.hiddenLayerNum : int = hiddenLayerNum
 
@@ -186,15 +188,15 @@ class NeuralNetwork :
 
         return np.array(de_dw)
 
-    def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, with_SAGA = False, show_error = False) -> tuple[list, list] :
+    def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, with_SAGA = False, show_error = False, with_replacement = False) -> tuple[list, list] :
 
         if (with_SAGA) :
-            return self.__fit_saga(X_train, Y_train, epsilon, epochs, show_error)
+            return self.__fit_saga(X_train, Y_train, epsilon, epochs, show_error, with_replacement)
         else :
-            return self.__fit_dyn_sample(X_train, Y_train, epsilon, epochs, show_error)
+            return self.__fit_dyn_sample(X_train, Y_train, epsilon, epochs, show_error, with_replacement)
     
     ## TODO : Gestire bene la differenza tra k e iter_num
-    def __fit_dyn_sample(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, show_error = False) -> tuple[list, list] :
+    def __fit_dyn_sample(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, show_error = False, with_replacement = False) -> tuple[list, list] :
 
         numpyLabels : np.ndarray = np.array(Y_train)
         uniqueLables = np.unique(numpyLabels)
@@ -223,23 +225,22 @@ class NeuralNetwork :
         k = 1
         iter_num = 1
         threshold = 500
+        indexes = np.arange(0, len(normalized_X_train))
         while (gradient_norm >= epsilon and k <= epochs) :
             mini_batch_dim = min(int(1/32 * len(normalized_X_train) + iter_num), len(normalized_X_train))
-            # mini_batch_dim = len(normalized_X_train)
+            # mini_batch_dim = min(32 * iter_num, len(normalized_X_train))
 
-            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), mini_batch_dim)
-            # not_seen_num = np.sum(samples_seen[mini_batch_indexes] == 0)
-            # if (not_seen_num < threshold) :
-            #     not_seen_indexes = np.random.choice(np.argwhere(samples_seen == 0).flatten(), threshold)
-            #     seen_indexes = np.random.choice(np.argwhere(samples_seen == 1).flatten(), mini_batch_dim - threshold)
-            #     mini_batch_indexes = np.concatenate((not_seen_indexes, seen_indexes))
-
+            if (not with_replacement) : 
+                ## Non prendo due volte lo stesso punto nella stessa epoca
+                selectable_indexes = np.where(samples_seen == 0)[0]
+                mini_batch_indexes = np.random.choice(a = indexes[selectable_indexes], size = min(mini_batch_dim, len(selectable_indexes)), replace = False)
+            else :
+                mini_batch_indexes = np.random.choice(a = len(normalized_X_train), size = mini_batch_dim, replace = False)
             mini_batch_train = normalized_X_train[mini_batch_indexes]
 
             self.do_forwarding(mini_batch_train)
 
             batchRealValuesMatrix = realValuesMatrix[mini_batch_indexes]
-                
             gradientSquaredNorm = self.backpropagation_dataset(batchRealValuesMatrix, iter_num)
             gradient_norm = np.sqrt(gradientSquaredNorm)
             gradient_norm_array.append(gradient_norm)
@@ -266,10 +267,11 @@ class NeuralNetwork :
                 k += 1
                 iter_num = 1
                 samples_seen[samples_seen == 1] = 0
+        
 
         return gradient_norm_array, error_array
 
-    def __fit_saga(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, show_error = False) -> tuple[list, list] :
+    def __fit_saga(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, show_error = False, with_replacement = False) -> tuple[list, list] :
 
         numpyLabels : np.ndarray = np.array(Y_train)
         uniqueLables = np.unique(numpyLabels)
@@ -293,11 +295,13 @@ class NeuralNetwork :
         gradient_norm = epsilon
         gradient_norm_array = []
         error_array = []
+        samples_seen = np.zeros(len(normalized_X_train))
         
         k = 1
+        iter_num = 1
         while (gradient_norm >= epsilon and k <= epochs) :
 
-            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/32 * len(normalized_X_train) + k), len(normalized_X_train)))
+            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/32 * len(normalized_X_train) + iter_num), len(normalized_X_train)))
             mini_batch_train = normalized_X_train[mini_batch_indexes]
             mini_batch_labels = normalized_Y_train[mini_batch_indexes]
 
@@ -339,17 +343,25 @@ class NeuralNetwork :
                 print("Gradient's norm: ", gradient_norm, "--", "Epoch: ", k)
             error_array.append(error)
 
-            self.update_weights(gradient_esteem, k)
-            k += 1
+            self.update_weights(gradient_esteem, iter_num)
+
+            iter_num += 1
+            samples_seen[mini_batch_indexes] = 1
+
+            if (np.all(samples_seen == 1)) :
+                k += 1
+                iter_num = 1
+                samples_seen[samples_seen == 1] = 0
 
         return gradient_norm_array, error_array
 
-    def update_weights(self, gradient_esteem : np.ndarray, k : int) -> None :
+
+    def update_weights(self, gradient_esteem : np.ndarray, iter_num : int) -> None :
         layer = self.lastLayer
         i = 0
         start = 0
         while (layer.prevLayer != None) :
-            layer.update_weights(gradient_esteem, start, k)
+            layer.update_weights(gradient_esteem, start, iter_num)
             i += 1
             start = start + layer.neuronNumber * (layer.prevLayer.neuronNumber + 1)
             layer = layer.prevLayer

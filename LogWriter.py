@@ -65,18 +65,18 @@ def writeClassificationLog(file_name : str, dataset_name : str, resultsList : li
             csvWriter.writerow([str(couple[0]), str(couple[1])])
 
 
-def writeAccuracyLog(file_name : str, dataset_name : str, accuracy : float, steps_num : int, with_saga : bool, method : StepEnum) :
+def writeAccuracyLog(file_name : str, dataset_name : str, accuracy : float, epochs_num : int, with_saga : bool, method : StepEnum, executionTime : str, neuronNumArray : list, replacement : bool) :
     mainDirectoryPath = initLog(dataset_name)
     filePath = mainDirectoryPath + "/" + file_name + "_Log.csv"
 
     if (not os.path.exists(filePath)) :
         with open(filePath, "+x") as logFile :
             csvWriter = csv.writer(logFile)
-            csvWriter.writerow(["Accuracy", "StepsNum", "SAGA", "Method"])
+            csvWriter.writerow(["Accuracy", "EpochsNum", "SAGA", "Replacement", "Method", "ExecutionTime", "NetworkConfig"])
     
     with open(filePath, "+a") as logFile :
         csvWriter = csv.writer(logFile)
-        csvWriter.writerow([accuracy, steps_num, with_saga, method.name])
+        csvWriter.writerow([accuracy, epochs_num, with_saga, replacement, method.name, executionTime, str(neuronNumArray)])
 
 
 def residual_plot(residual : pd.DataFrame, dataset_name : str) -> None :
