@@ -33,7 +33,6 @@ dataset_dict = {
         "classification" : True
     } ,
 
-    
     "Pistachio" : {
         "fileName" : "./datasets/Classification_Pistachio/pistachio.csv",
         "targetName" : "Class" ,

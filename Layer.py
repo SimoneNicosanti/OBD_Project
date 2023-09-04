@@ -14,14 +14,18 @@ class Layer :
         self.lambdaL1 : float = lambdaL1
         self.lambdaL2 : float = lambdaL2
 
+        self.bestWeightMatrix = None
+        self.bestBiasArray = None
+
     def setPrevAndNextLayer(self, prevLayer, nextLayer) -> None :
         self.prevLayer = prevLayer
         self.nextLayer = nextLayer
 
         if (prevLayer != None) :
-            # self.weightMatrix = np.random.uniform(0, 0.1, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
+            # TODO Capire problema inizializzazione dei pesi con RmsProp e AdaGrad --> Scegliere i pesi da usare
+            # self.weightMatrix = np.random.uniform(0, 0.05, ((self.prevLayer.getNeuronNumber(), self.getNeuronNumber())))
             ## https://towardsdatascience.com/weight-initialization-techniques-in-neural-networks-26c649eb3b78
-            self.weightMatrix = np.random.normal(loc = 0, scale = np.sqrt(2 / (prevLayer.getNeuronNumber() + self.getNeuronNumber())), size = (self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
+            self.weightMatrix = np.random.randn(self.prevLayer.getNeuronNumber(), self.getNeuronNumber()) * np.sqrt(1 / (prevLayer.getNeuronNumber() + self.getNeuronNumber()))
             self.biasArray = np.zeros(self.getNeuronNumber())
 
     def getNeuronNumber(self) -> int :
@@ -42,9 +46,13 @@ class Layer :
 
         return
 
-    def reset_de_dw(self) -> None :
-        self.de_dw_matrix = np.zeros((self.prevLayer.getNeuronNumber(), self.getNeuronNumber()))
-        self.de_dw_bias : np.ndarray = np.zeros(self.neuronNumber)
+    def change_best_weights(self) :
+        self.bestWeightMatrix = np.copy(self.weightMatrix)
+        self.bestBiasArray = np.copy(self.biasArray)
+
+    def set_best_weights(self) :
+        self.weightMatrix = self.bestWeightMatrix
+        self.biasArray = self.bestBiasArray
 
     def update_weights(self, gradient_esteem : np.ndarray, start : int, k : int, learning_rate : float = 0.001) -> None :
         end = start + (self.neuronNumber * (self.prevLayer.neuronNumber + 1))
@@ -99,6 +107,7 @@ class AdaGradLayer(Layer) :
         #             self.biasArray[j] -= alpha * (gradient_esteem_elem + self.lambdaL1 * np.sign(self.biasArray[j]) +  2 * self.lambdaL2 * self.biasArray[j])
         #         else :
         #             self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + self.lambdaL1 * np.sign(self.weightMatrix[i][j]) + 2 * self.lambdaL2 * self.weightMatrix[i][j])
+        
         esteem_matrix = esteem_subset.reshape(self.neuronNumber, self.prevLayer.neuronNumber + 1).T
         self.adaGradAccumulator += esteem_subset ** 2
         accum_matrix = self.adaGradAccumulator.reshape(self.neuronNumber, self.prevLayer.neuronNumber + 1).T
@@ -106,9 +115,11 @@ class AdaGradLayer(Layer) :
         alpha = learning_rate / (np.sqrt(accum_matrix) + 1e-8)
         bias_incr = esteem_matrix[self.prevLayer.neuronNumber]
         weight_incr = esteem_matrix[0:self.prevLayer.neuronNumber]
+        bias_alpha = alpha[self.prevLayer.neuronNumber]
+        weight_alpha = alpha[0:self.prevLayer.neuronNumber]
 
-        self.biasArray -= alpha * (bias_incr + self.lambdaL1 * np.sign(self.biasArray) + 2 * self.lambdaL2 * self.biasArray)
-        self.weightMatrix -= alpha * (weight_incr + self.lambdaL1 * np.sign(self.weightMatrix) + 2 * self.lambdaL2 * self.weightMatrix)
+        self.biasArray -= bias_alpha * (bias_incr + self.lambdaL1 * np.sign(self.biasArray) + 2 * self.lambdaL2 * self.biasArray)
+        self.weightMatrix -= weight_alpha * (weight_incr + self.lambdaL1 * np.sign(self.weightMatrix) + 2 * self.lambdaL2 * self.weightMatrix)
 
 
 class RMSPropLayer(Layer) :
@@ -135,16 +146,19 @@ class RMSPropLayer(Layer) :
         #             self.biasArray[j] -= alpha * (gradient_esteem_elem + self.lambdaL1 * np.sign(self.biasArray[j]) +  2 * self.lambdaL2 * self.biasArray[j])
         #         else :
         #             self.weightMatrix[i][j] -= alpha * (gradient_esteem_elem + self.lambdaL1 * np.sign(self.weightMatrix[i][j]) + 2 * self.lambdaL2 * self.weightMatrix[i][j])
+
         esteem_matrix = esteem_subset.reshape(self.neuronNumber, self.prevLayer.neuronNumber + 1).T
-        self.rmsPropAccumulator = 0.9 * self.rmsPropAccumulator + 0.1 * esteem_subset
+        self.rmsPropAccumulator = 0.9 * self.rmsPropAccumulator + 0.1 * esteem_subset ** 2
         rms_acc_mat = self.rmsPropAccumulator.reshape(self.neuronNumber, self.prevLayer.neuronNumber + 1).T
         
         alpha = learning_rate / (np.sqrt(rms_acc_mat) + 1e-8)
         bias_incr = esteem_matrix[self.prevLayer.neuronNumber]
         weight_incr = esteem_matrix[0:self.prevLayer.neuronNumber]
+        bias_alpha = alpha[self.prevLayer.neuronNumber]
+        weight_alpha = alpha[0:self.prevLayer.neuronNumber]
 
-        self.weightMatrix -= alpha * (weight_incr + self.lambdaL1 * np.sign(self.weightMatrix) + 2 * self.lambdaL2 * self.weightMatrix)
-        self.biasArray -= alpha * (bias_incr + self.lambdaL1 * np.sign(self.biasArray) + 2 * self.lambdaL2 * self.biasArray)
+        self.weightMatrix -= weight_alpha * (weight_incr + self.lambdaL1 * np.sign(self.weightMatrix) + 2 * self.lambdaL2 * self.weightMatrix)
+        self.biasArray -= bias_alpha * (bias_incr + self.lambdaL1 * np.sign(self.biasArray) + 2 * self.lambdaL2 * self.biasArray)
 
 
 
@@ -187,8 +201,8 @@ class AdamLayer(Layer) :
         m_hat_mat = adam_m_matrix / (1 - beta1 ** k)
         v_hat_mat = adam_v_matrix / (1 - beta2 ** k)
         
-        self.biasArray -= learning_rate * (m_hat_mat / (np.sqrt(v_hat_mat) + 1e-8) + self.lambdaL1 * np.sign(self.biasArray) + 2 * self.lambdaL2 * self.biasArray)
-        self.weightMatrix -= learning_rate * (m_hat_mat / (np.sqrt(v_hat_mat) + 1e-8) + self.lambdaL1 * np.sign(self.weightMatrix) + 2 * self.lambdaL2 * self.weightMatrix)            
+        self.biasArray -= learning_rate * (m_hat_mat[self.prevLayer.neuronNumber] / (np.sqrt(v_hat_mat[self.prevLayer.neuronNumber]) + 1e-8) + self.lambdaL1 * np.sign(self.biasArray) + 2 * self.lambdaL2 * self.biasArray)
+        self.weightMatrix -= learning_rate * (m_hat_mat[0 : self.prevLayer.neuronNumber] / (np.sqrt(v_hat_mat[0 : self.prevLayer.neuronNumber]) + 1e-8) + self.lambdaL1 * np.sign(self.weightMatrix) + 2 * self.lambdaL2 * self.weightMatrix)            
 
 
 class NadamLayer(Layer) :

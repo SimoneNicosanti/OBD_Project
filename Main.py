@@ -5,15 +5,13 @@ from DatasetInfo import dataset_dict
 from StepEnum import *
 from CrossValidator import *
 import datetime
-from os import environ
 
 
-# TODO : tipizzare tutte le variabili ed i return delle funzioni
 
 def main() :
     np.random.seed(123456)
 
-    dataset_name = "Chinese"
+    dataset_name = "MNIST"
 
     dataset_info = dataset_dict[dataset_name]
     if (dataset_name == "Chinese") :
@@ -34,29 +32,30 @@ def main() :
         targetName = targetName, 
         targetDrop = toDrop, 
         targetOHE = toOHE, 
-        testSetSize = 0.15, 
-        validationSetSize = 0.15
+        testSetSize = 0.2, 
+        validationSetSize = 0.2
     )
     
-    layerNumArray : list = [2]
-    neuronNumArray : list = [32, 64]
-    lambdaL1Array : list = []
-    lambdaL2Array : list = [1e-3, 1e-2, 1e-1, 0.0, 1e0, 1e1]
+    crossLayerNum : list = [2, 3]
+    crossNeuronNum : list = [128, 256]
+    crossLambdaL1 : list = [1e-2, 1e-1, 0.0]
+    crossLambdaL2 : list = [1e-2, 1e-1, 0.0]
     lambdaL1 = 0.0
     lambdaL2 = 1e-3
     crossValidation = False
+    threadValidation = True
     method = StepEnum.NADAM
-    epochs = 5
+    epochs = 10
     with_SAGA = False
-    show_error = False
+    show_error = True
     with_replacement = False
-    start = time.time()
-    model, gradient_norm_array, error_array = crossValidate(
+    
+    model, gradient_norm_array, error_array, training_time = buildModel(
         isClassification, 
-        layerNumArray, 
-        neuronNumArray, 
-        lambdaL1Array,
-        lambdaL2Array,
+        crossLayerNum, 
+        crossNeuronNum, 
+        crossLambdaL1,
+        crossLambdaL2,
         X_train, Y_train, 
         X_valid, Y_valid,
         epochs,
@@ -66,22 +65,22 @@ def main() :
         lambdaL2,
         show_error,
         crossValidation,
+        threadValidation,
         with_replacement
     )
-    end = time.time()
 
-    totalTime = str(datetime.timedelta(seconds = end - start))
+    totalTime = str(datetime.timedelta(seconds = training_time))
 
     writeAllNormLog(gradient_norm_array, dataset_name)
     if (show_error) :
         writeErrorLog(error_array, dataset_name)
 
-    accuracy_trainining, trainingPredictionArray = model.predict(X_train, Y_train)
-    accuracy_generalization, generalizationPredictionArray = model.predict(X_test, Y_test)
+    accuracy_trainining, trainingPredictionArray = model.test(X_train, Y_train)
+    accuracy_generalization, generalizationPredictionArray = model.test(X_test, Y_test)
     writeClassificationLog("Training", dataset_name, trainingPredictionArray)
     writeClassificationLog("Generalization", dataset_name, generalizationPredictionArray)
-    writeAccuracyLog("Training", dataset_name, accuracy_trainining, epochs, with_SAGA, method, totalTime, model.neuronNumArray, with_replacement)
-    writeAccuracyLog("Generalization", dataset_name, accuracy_generalization, epochs, with_SAGA, method, totalTime, model.neuronNumArray, with_replacement)
+    writeAccuracyLog("Training", dataset_name, accuracy_trainining, epochs, with_SAGA, method, totalTime, model.neuronNumArray, with_replacement, model.lambdaL1, model.lambdaL2)
+    writeAccuracyLog("Generalization", dataset_name, accuracy_generalization, epochs, with_SAGA, method, totalTime, model.neuronNumArray, with_replacement, model.lambdaL1, model.lambdaL2)
 
     print("Training Accuracy:", accuracy_trainining)
     print("Generalization Accuracy:", accuracy_generalization)
@@ -115,8 +114,6 @@ def main() :
         residual_plot(residual, dataset_name)
 
 if __name__ == "__main__" :
-    environ["OMP_NUM_THREADS"] = "4"
-    environ["OPENBLAS_NUM_THREADS"] = "4"
     main()
 
 

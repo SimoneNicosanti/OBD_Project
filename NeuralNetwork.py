@@ -7,9 +7,11 @@ import time
 
 class NeuralNetwork :
 
-    def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNumArray : np.ndarray, isClassification : bool = True, method : StepEnum = StepEnum.RMSPROP, lambdaL1 : float = 0.0, lambdaL2 : float = 0.0) -> None:
+    def __init__(self, hiddenLayerNum : int, inputDim : int, outputDim : int, neuronNumArray : np.ndarray, isClassification : bool = True, method : StepEnum = StepEnum.RMSPROP, lambdaL1 : float = 0, lambdaL2 : float = 0.1) -> None:
 
         self.neuronNumArray = neuronNumArray
+        self.lambdaL1 = lambdaL1
+        self.lambdaL2 = lambdaL2
         self.isClassification : bool = isClassification
         self.hiddenLayerNum : int = hiddenLayerNum
 
@@ -54,7 +56,7 @@ class NeuralNetwork :
             return Layer(neuronNum, lambdaL1, lambdaL2)
         
     
-    def predict(self, X_test : np.ndarray, Y_test : np.ndarray) -> np.ndarray :
+    def test(self, X_test : np.ndarray, Y_test : np.ndarray) -> np.ndarray :
         numpyLabels : np.ndarray = np.array(Y_test)
         uniqueLables = np.unique(numpyLabels)
         sortedLabels = np.sort(uniqueLables)
@@ -63,7 +65,6 @@ class NeuralNetwork :
 
         normalized_X_test = (X_test - self.train_mean) / self.train_std
 
-        # TODO Controllare per concorrenza
         if (not self.isClassification) :
             normalized_Y_test = (Y_test - self.train_y_mean) / self.train_y_std
         else :
@@ -148,13 +149,16 @@ class NeuralNetwork :
 
         return np.sum(gradientSquaredNormArray)
 
-    # TODO : dà errore quando si fa la regressione col SAGA
     def backpropagation_sample(self, labels : np.ndarray, point_index : int) -> np.ndarray :
         layer : Layer = self.lastLayer
 
         de_da = []
         de_dw = []
-        de_dy = derivative_e_y(layer.getOutput()[point_index][np.newaxis, :], labels, self.isClassification)
+        if (self.isClassification) :
+            de_dy = derivative_e_y(layer.getOutput()[point_index][np.newaxis, :], labels, self.isClassification)
+        else :
+            de_dy = derivative_e_y(layer.getOutput()[point_index], labels, self.isClassification)
+
         for j in range(0, layer.neuronNumber) :
             prev_layer : Layer = layer.prevLayer
             de_da.append(de_dy[j] * 1)
@@ -176,6 +180,7 @@ class NeuralNetwork :
             
             for j in range(0, layer.neuronNumber) :
                 dg = layer.relu_derivative(layer.aArray[point_index][j])
+               #print(de_da_prev.shape, next_layer.weightMatrix[j].shape)
                 de_da.append(dg * np.dot(de_da_prev, next_layer.weightMatrix[j]))
                 for i in range(0, prev_layer.neuronNumber + 1) :
                     if (i == prev_layer.neuronNumber) :
@@ -185,7 +190,7 @@ class NeuralNetwork :
                         da_dw = prev_layer.getOutput()[point_index][i]
                         de_dw.append(de_da[j] * da_dw)
             layer = layer.prevLayer
-
+        
         return np.array(de_dw)
 
     def fit(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, with_SAGA = False, show_error = False, with_replacement = False) -> tuple[list, list] :
@@ -195,18 +200,18 @@ class NeuralNetwork :
         else :
             return self.__fit_dyn_sample(X_train, Y_train, epsilon, epochs, show_error, with_replacement)
     
-    ## TODO : Gestire bene la differenza tra k e iter_num
+    
     def __fit_dyn_sample(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, show_error = False, with_replacement = False) -> tuple[list, list] :
-
-        numpyLabels : np.ndarray = np.array(Y_train)
-        uniqueLables = np.unique(numpyLabels)
-        sortedLabels = np.sort(uniqueLables)
 
         self.train_mean = X_train.mean(axis = 0)
         self.train_std = X_train.std(axis = 0) + 1e-3
         normalized_X_train = (X_train - self.train_mean) / self.train_std
 
         if (self.isClassification) :
+            numpyLabels : np.ndarray = np.array(Y_train)
+            uniqueLables = np.unique(numpyLabels)
+            sortedLabels = np.sort(uniqueLables)
+
             normalized_Y_train = Y_train
             sortedLabelsMatrix = np.tile(sortedLabels, (X_train.shape[0], 1))
             labelsMatrix = np.tile(Y_train.T, (sortedLabels.shape[0], 1)).T
@@ -224,9 +229,10 @@ class NeuralNetwork :
         
         k = 1
         iter_num = 1
-        threshold = 500
         indexes = np.arange(0, len(normalized_X_train))
-        while (gradient_norm >= epsilon and k <= epochs) :
+        min_err = float("inf")
+        # gradient_norm >= epsilon and 
+        while (k <= epochs) :
             mini_batch_dim = min(int(1/32 * len(normalized_X_train) + iter_num), len(normalized_X_train))
             # mini_batch_dim = min(32 * iter_num, len(normalized_X_train))
 
@@ -245,19 +251,18 @@ class NeuralNetwork :
             gradient_norm = np.sqrt(gradientSquaredNorm)
             gradient_norm_array.append(gradient_norm)
 
-            if (show_error) :
-                self.do_forwarding(normalized_X_train)
+            self.do_forwarding(normalized_X_train)
 
-                if (self.isClassification) :
-                    error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
-                else :
-                    output = self.lastLayer.getOutput() * self.train_y_std + self.train_y_mean
-                    matrix = realValuesMatrix * self.train_y_std + self.train_y_mean
-                    error = middle_error(output, matrix, self.isClassification)
-                print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
+            if (self.isClassification) :
+                error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
             else :
-                error = 0
-                print("Gradient's norm: ", gradient_norm, "--", "Epoch: ", k, "-- Iter: ", iter_num)
+                output = self.lastLayer.getOutput() * self.train_y_std + self.train_y_mean
+                matrix = realValuesMatrix * self.train_y_std + self.train_y_mean
+                error = middle_error(output, matrix, self.isClassification)
+            print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
+            if (error < min_err) :
+                min_err = error
+                self.change_best_weights()
             error_array.append(error)
 
             iter_num += 1
@@ -268,29 +273,34 @@ class NeuralNetwork :
                 iter_num = 1
                 samples_seen[samples_seen == 1] = 0
         
-
+        
+        print("Errore minimo:", min_err)
+        self.set_best_weights()
+            
         return gradient_norm_array, error_array
 
     def __fit_saga(self, X_train : np.ndarray , Y_train : np.ndarray, epsilon = 1e-4, epochs = 1e3, show_error = False, with_replacement = False) -> tuple[list, list] :
-
-        numpyLabels : np.ndarray = np.array(Y_train)
-        uniqueLables = np.unique(numpyLabels)
-        sortedLabels = np.sort(uniqueLables)
 
         self.train_mean = X_train.mean(axis = 0)
         self.train_std = X_train.std(axis = 0) + 1e-3
         normalized_X_train = (X_train - self.train_mean) / self.train_std
 
         if (self.isClassification) :
+            numpyLabels : np.ndarray = np.array(Y_train)
+            uniqueLables = np.unique(numpyLabels)
+            sortedLabels = np.sort(uniqueLables)
+
             sortedLabelsMatrix = np.tile(sortedLabels, (X_train.shape[0], 1))
             labelsMatrix = np.tile(Y_train.T, (sortedLabels.shape[0], 1)).T
             realValuesMatrix = (sortedLabelsMatrix == labelsMatrix).astype(int)
             normalized_Y_train = Y_train
+            realValuesMatrix = (sortedLabelsMatrix == labelsMatrix).astype(int)
         else :
             self.train_y_mean = Y_train.mean(axis = 0)
             self.train_y_std = Y_train.std(axis = 0)
             normalized_Y_train = (Y_train - self.train_y_mean) / self.train_y_std
-        
+            realValuesMatrix = normalized_Y_train[:, np.newaxis]
+
         initialized_saga_acc = False
         gradient_norm = epsilon
         gradient_norm_array = []
@@ -299,16 +309,26 @@ class NeuralNetwork :
         
         k = 1
         iter_num = 1
+        indexes = np.arange(0, len(normalized_X_train))
+        min_err = float("inf")
         while (gradient_norm >= epsilon and k <= epochs) :
 
-            mini_batch_indexes = np.random.randint(0, len(normalized_X_train), min(int(1/32 * len(normalized_X_train) + iter_num), len(normalized_X_train)))
+            mini_batch_dim = min(int(1/32 * len(normalized_X_train) + iter_num), len(normalized_X_train))
+            # mini_batch_dim = min(32 * iter_num, len(normalized_X_train))
+
+            if (not with_replacement) : 
+                ## Non prendo due volte lo stesso punto nella stessa epoca
+                selectable_indexes = np.where(samples_seen == 0)[0]
+                mini_batch_indexes = np.random.choice(a = indexes[selectable_indexes], size = min(mini_batch_dim, len(selectable_indexes)), replace = False)
+            else :
+                mini_batch_indexes = np.random.choice(a = len(normalized_X_train), size = mini_batch_dim, replace = False)
             mini_batch_train = normalized_X_train[mini_batch_indexes]
-            mini_batch_labels = normalized_Y_train[mini_batch_indexes]
 
             self.do_forwarding(mini_batch_train)
 
             sagaIndex = np.random.randint(0, len(mini_batch_indexes))
 
+            mini_batch_labels = normalized_Y_train[mini_batch_indexes]
             elemLabel = mini_batch_labels[sagaIndex]
             if (self.isClassification) :
                 elemLabelsArray = (sortedLabels == elemLabel).astype(int)
@@ -328,19 +348,19 @@ class NeuralNetwork :
             gradient_norm = np.linalg.norm(gradient_esteem)
             gradient_norm_array.append(gradient_norm)
 
-            if (show_error) :
-                self.do_forwarding(normalized_X_train)
+            self.do_forwarding(normalized_X_train)
 
-                if (self.isClassification) :
-                    error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
-                else :
-                    output = self.lastLayer.getOutput() * self.train_y_std + self.train_y_mean
-                    matrix = realValuesMatrix * self.train_y_std + self.train_y_mean
-                    error = middle_error(output, matrix, self.isClassification)
-                print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
+            if (self.isClassification) :
+                error = middle_error(self.lastLayer.getOutput(), realValuesMatrix, self.isClassification)
             else :
-                error = 0
-                print("Gradient's norm: ", gradient_norm, "--", "Epoch: ", k)
+                output = self.lastLayer.getOutput() * self.train_y_std + self.train_y_mean
+                matrix = realValuesMatrix * self.train_y_std + self.train_y_mean
+                error = middle_error(output, matrix, self.isClassification)
+
+            print("Gradient's norm: ", gradient_norm, "--", "Error: ", error, "--", "Epoch: ", k)
+            if (error < min_err) :
+                min_err = error
+                self.change_best_weights()
             error_array.append(error)
 
             self.update_weights(gradient_esteem, iter_num)
@@ -350,8 +370,11 @@ class NeuralNetwork :
 
             if (np.all(samples_seen == 1)) :
                 k += 1
-                iter_num = 1
+                #iter_num = 1
                 samples_seen[samples_seen == 1] = 0
+        
+        print("Errore minimo:", min_err)
+        self.set_best_weights()
 
         return gradient_norm_array, error_array
 
@@ -366,3 +389,16 @@ class NeuralNetwork :
             start = start + layer.neuronNumber * (layer.prevLayer.neuronNumber + 1)
             layer = layer.prevLayer
         return
+    
+    def change_best_weights(self) :
+        #print("CHANGED")
+        currLayer : Layer = self.firstLayer.nextLayer
+        while (currLayer != None) :
+            currLayer.change_best_weights()
+            currLayer = currLayer.nextLayer
+
+    def set_best_weights(self) :
+        currLayer : Layer = self.firstLayer.nextLayer
+        while (currLayer != None) :
+            currLayer.set_best_weights()
+            currLayer = currLayer.nextLayer

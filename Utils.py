@@ -13,37 +13,37 @@ def datasetPreprocess(dataset : pd.DataFrame, targetName : str, targetDrop : lis
     pre_processed_dataset = pre_processed_dataset.drop(targetDrop, axis = 1)
     pre_processed_dataset = oneHotEncoding(pre_processed_dataset, targetOHE)
     pre_processed_dataset = pre_processed_dataset.dropna(axis = 0)
+    pre_processed_dataset = pre_processed_dataset.drop(targetName, axis = 1)
     
-    validationSet = pre_processed_dataset.groupby(targetName).apply(lambda group: group.sample(frac = validationSetSize))
-    validationSet = validationSet.reset_index(level = 0, drop = True)
-    X_valid, Y_valid = validationSet.drop(targetName, axis = 1).values, validationSet[targetName].values
-    pre_processed_dataset = pre_processed_dataset.drop(index = validationSet.index)
+    # validationSet = pre_processed_dataset.groupby(targetName).apply(lambda group: group.sample(frac = validationSetSize))
+    # validationSet = validationSet.reset_index(level = 0, drop = True)
+    # X_valid, Y_valid = validationSet.drop(targetName, axis = 1).values, validationSet[targetName].values
+    # pre_processed_dataset = pre_processed_dataset.drop(index = validationSet.index)
 
-    testingSet = pre_processed_dataset.groupby(targetName).apply(lambda group: group.sample(frac = testSetSize))
-    testingSet = testingSet.reset_index(level = 0, drop = True)
-    X_test, Y_test = testingSet.drop(targetName, axis = 1).values, testingSet[targetName].values
-    pre_processed_dataset = pre_processed_dataset.drop(index = testingSet.index)
+    # testingSet = pre_processed_dataset.groupby(targetName).apply(lambda group: group.sample(frac = testSetSize))
+    # testingSet = testingSet.reset_index(level = 0, drop = True)
+    # X_test, Y_test = testingSet.drop(targetName, axis = 1).values, testingSet[targetName].values
+    # pre_processed_dataset = pre_processed_dataset.drop(index = testingSet.index)
 
-    X_train, Y_train = pre_processed_dataset.drop(targetName, axis = 1).values, pre_processed_dataset[targetName].values
+    # X_train, Y_train = pre_processed_dataset.drop(targetName, axis = 1).values, pre_processed_dataset[targetName].values
 
-    return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
+    # return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
-    return 
     featuresMatrix = pre_processed_dataset.values
 
     labelsColumn = dataset[targetName].values
 
     pointsNumber : int = featuresMatrix.shape[0]
+    indexesArray : np.ndarray = np.arange(0, pointsNumber)
+    np.random.shuffle(indexesArray)
 
-    indexesArray = np.arange(start = 0, stop = pointsNumber)
-    testIndexes = np.random.choice(indexesArray, int(pointsNumber * testSetSize), replace = False)
+    testPointsNum = int(len(indexesArray) * testSetSize)
+    validPointsNum = int(len(indexesArray) * validationSetSize)
 
-    indexesArray = np.setdiff1d(indexesArray, testIndexes)
-    validationIndexes = np.random.choice(indexesArray, int(pointsNumber * validationSetSize), replace = False)
-
-    indexesArray = np.setdiff1d(indexesArray, validationIndexes)
-    trainIndexes = indexesArray
-
+    testIndexes = indexesArray[0 : testPointsNum]
+    validationIndexes = indexesArray[testPointsNum : testPointsNum + validPointsNum]
+    trainIndexes = indexesArray[testPointsNum + validPointsNum : ]
+    
     X_train, Y_train = featuresMatrix[trainIndexes], labelsColumn[trainIndexes]
     X_valid, Y_valid = featuresMatrix[validationIndexes], labelsColumn[validationIndexes]
     X_test, Y_test = featuresMatrix[testIndexes], labelsColumn[testIndexes]

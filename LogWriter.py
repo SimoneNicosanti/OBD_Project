@@ -65,18 +65,18 @@ def writeClassificationLog(file_name : str, dataset_name : str, resultsList : li
             csvWriter.writerow([str(couple[0]), str(couple[1])])
 
 
-def writeAccuracyLog(file_name : str, dataset_name : str, accuracy : float, epochs_num : int, with_saga : bool, method : StepEnum, executionTime : str, neuronNumArray : list, replacement : bool) :
+def writeAccuracyLog(file_name : str, dataset_name : str, accuracy : float, epochs_num : int, with_saga : bool, method : StepEnum, executionTime : str, neuronNumArray : list, replacement : bool, lambdaL1 : float, lambdaL2 : float) :
     mainDirectoryPath = initLog(dataset_name)
     filePath = mainDirectoryPath + "/" + file_name + "_Log.csv"
 
     if (not os.path.exists(filePath)) :
         with open(filePath, "+x") as logFile :
             csvWriter = csv.writer(logFile)
-            csvWriter.writerow(["Accuracy", "EpochsNum", "SAGA", "Replacement", "Method", "ExecutionTime", "NetworkConfig"])
+            csvWriter.writerow(["Accuracy", "EpochsNum", "SAGA", "Replacement", "Method", "ExecutionTime", "NetworkConfig", "LambdaL1", "LambdaL2"])
     
     with open(filePath, "+a") as logFile :
         csvWriter = csv.writer(logFile)
-        csvWriter.writerow([accuracy, epochs_num, with_saga, replacement, method.name, executionTime, str(neuronNumArray)])
+        csvWriter.writerow([accuracy, epochs_num, with_saga, replacement, method.name, executionTime, str(neuronNumArray), lambdaL1, lambdaL2])
 
 
 def residual_plot(residual : pd.DataFrame, dataset_name : str) -> None :
@@ -89,7 +89,7 @@ def residual_plot(residual : pd.DataFrame, dataset_name : str) -> None :
     std_dev = residual_array.std()
     #bins_num = int(1 + np.log2(len(residual_array)))
     iqr = np.percentile(residual_array, 75) - np.percentile(residual_array, 25)
-    bins_num = int((residual_array.max() - residual_array.min()) / (2 * iqr * np.power(len(residual_array), - 1 / 3)))
+    bins_num = int(np.sqrt(len(residual_array)))
 
     axes.hist(residual_array, bins = bins_num, edgecolor = "black", density = True, label = "Residual")
 

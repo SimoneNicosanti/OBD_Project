@@ -1,2 +1,0 @@
-Accuracy,EpochsNum,SAGA,Replacement,Method,ExecutionTime,NetworkConfig
-0.9644506001846722,5,False,False,NADAM,0:07:01.696102,"[512, 512]"
