@@ -11,7 +11,7 @@ import datetime
 def main() :
     np.random.seed(123456)
 
-    dataset_name = "Chinese"
+    dataset_name = "MNIST"
 
     dataset_info = dataset_dict[dataset_name]
     if (dataset_name == "Chinese") :
@@ -45,7 +45,7 @@ def main() :
     crossValidation = False
     threadValidation = False
     method = StepEnum.NADAM
-    epochs = 25
+    epochs = 5
     with_SAGA = False
     show_error = True
     with_replacement = False
