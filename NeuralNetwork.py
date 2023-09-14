@@ -229,6 +229,7 @@ class NeuralNetwork :
         
         k = 1
         iter_num = 1
+        total_iter_num = 1
         indexes = np.arange(0, len(normalized_X_train))
         min_err = float("inf")
         # gradient_norm >= epsilon and 
@@ -247,7 +248,7 @@ class NeuralNetwork :
             self.do_forwarding(mini_batch_train)
 
             batchRealValuesMatrix = realValuesMatrix[mini_batch_indexes]
-            gradientSquaredNorm = self.backpropagation_dataset(batchRealValuesMatrix, iter_num)
+            gradientSquaredNorm = self.backpropagation_dataset(batchRealValuesMatrix, total_iter_num)
             gradient_norm = np.sqrt(gradientSquaredNorm)
             gradient_norm_array.append(gradient_norm)
 
@@ -266,6 +267,7 @@ class NeuralNetwork :
             error_array.append(error)
 
             iter_num += 1
+            total_iter_num += 1
             samples_seen[mini_batch_indexes] = 1
 
             if (np.all(samples_seen == 1)) :
@@ -309,6 +311,7 @@ class NeuralNetwork :
         
         k = 1
         iter_num = 1
+        total_iter_num = 1
         indexes = np.arange(0, len(normalized_X_train))
         min_err = float("inf")
         while (gradient_norm >= epsilon and k <= epochs) :
@@ -363,14 +366,15 @@ class NeuralNetwork :
                 self.change_best_weights()
             error_array.append(error)
 
-            self.update_weights(gradient_esteem, iter_num)
+            self.update_weights(gradient_esteem, total_iter_num)
 
             iter_num += 1
+            total_iter_num += 1
             samples_seen[mini_batch_indexes] = 1
 
             if (np.all(samples_seen == 1)) :
                 k += 1
-                #iter_num = 1
+                iter_num = 1
                 samples_seen[samples_seen == 1] = 0
         
         print("Errore minimo:", min_err)

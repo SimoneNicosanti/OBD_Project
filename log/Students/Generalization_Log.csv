@@ -1,0 +1,7 @@
+Accuracy,EpochsNum,SAGA,Replacement,Method,ExecutionTime,NetworkConfig,LambdaL1,LambdaL2
+
+339.26776701550517,1,False,False,NADAM,0:00:00.043849,"[5, 5]",0.0,0.0
+55.90448963654346,5,False,False,NADAM,0:00:00.203455,"[5, 5]",0.0,0.0
+14.226308432826421,10,False,False,NADAM,0:00:00.356048,"[5, 5]",0.0,0.0
+4.0941193376928515,50,False,False,NADAM,0:00:01.784228,"[5, 5]",0.0,0.0
+4.008849704557986,100,False,False,NADAM,0:00:03.519591,"[5, 5]",0.0,0.0

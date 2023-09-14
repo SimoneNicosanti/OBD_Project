@@ -11,7 +11,7 @@ import datetime
 def main() :
     np.random.seed(123456)
 
-    dataset_name = "MNIST"
+    dataset_name = "Chinese"
 
     dataset_info = dataset_dict[dataset_name]
     if (dataset_name == "Chinese") :
@@ -38,14 +38,14 @@ def main() :
     
     crossLayerNum : list = [2, 3]
     crossNeuronNum : list = [128, 256]
-    crossLambdaL1 : list = [1e-2, 1e-1, 0.0]
-    crossLambdaL2 : list = [1e-2, 1e-1, 0.0]
+    crossLambdaL1 : list = [0.0]
+    crossLambdaL2 : list = [1e-3, 1e-2, 1e-1]
     lambdaL1 = 0.0
     lambdaL2 = 1e-3
     crossValidation = False
-    threadValidation = True
+    threadValidation = False
     method = StepEnum.NADAM
-    epochs = 10
+    epochs = 25
     with_SAGA = False
     show_error = True
     with_replacement = False
@@ -104,9 +104,6 @@ def main() :
             "Errore", 
             "ERRORE NEL NUMERO DI ITERAZIONI",
             dataset_name)
-
-    #bar_plot(["Training Accuracy", "Generalization Accuracy"], [accuracy_trainining, accuracy_generalization], "Type of accuracy", "Accuracy", "Bar plot for accuracies")
-    #pie_plot([len(X_train), len(X_valid), len(X_test)], ["Training Set", "Validation Set", "Test Set"], "Ripartizione dataset")
 
     if (not isClassification) :
         regression_results = pd.read_csv("./log/" + dataset_name + "/Generalization_Results.csv")
