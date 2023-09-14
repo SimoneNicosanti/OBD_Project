@@ -14,20 +14,6 @@ def datasetPreprocess(dataset : pd.DataFrame, targetName : str, targetDrop : lis
     pre_processed_dataset = oneHotEncoding(pre_processed_dataset, targetOHE)
     pre_processed_dataset = pre_processed_dataset.dropna(axis = 0)
     pre_processed_dataset = pre_processed_dataset.drop(targetName, axis = 1)
-    
-    # validationSet = pre_processed_dataset.groupby(targetName).apply(lambda group: group.sample(frac = validationSetSize))
-    # validationSet = validationSet.reset_index(level = 0, drop = True)
-    # X_valid, Y_valid = validationSet.drop(targetName, axis = 1).values, validationSet[targetName].values
-    # pre_processed_dataset = pre_processed_dataset.drop(index = validationSet.index)
-
-    # testingSet = pre_processed_dataset.groupby(targetName).apply(lambda group: group.sample(frac = testSetSize))
-    # testingSet = testingSet.reset_index(level = 0, drop = True)
-    # X_test, Y_test = testingSet.drop(targetName, axis = 1).values, testingSet[targetName].values
-    # pre_processed_dataset = pre_processed_dataset.drop(index = testingSet.index)
-
-    # X_train, Y_train = pre_processed_dataset.drop(targetName, axis = 1).values, pre_processed_dataset[targetName].values
-
-    # return X_train, Y_train, X_valid, Y_valid, X_test, Y_test
 
     featuresMatrix = pre_processed_dataset.values
 

@@ -149,25 +149,6 @@ def crossValidate(
                 best_grad_norm_array = grad_norm_array
                 best_error_array = err_array
                 best_time = end - start
-    
-    ## Cross Validation su valori di default
-    #for i in range(0, len(total_combinations)) :
-    #    numberNeurons = total_combinations[i]
-    #    numberLayers = len(numberNeurons)
-    #
-    #model : NeuralNetwork = NeuralNetwork(numberLayers, featuresNumber, labelsNumber, numberNeurons, isClassification, method, lambdaL1, lambdaL2)
-    #    start = time.time()
-    #    grad_norm_array, err_array = model.fit(X_train, Y_train, epochs = max_steps, epsilon = 1e-12, with_SAGA = with_SAGA, show_error = show_error, with_replacement = with_replacement)
-    #    end = time.time()
-    #    accuracy_validation, _ = model.test(X_valid, Y_valid)
-    #    print("Model: ", numberNeurons, "--", "Accuracy validation: ", accuracy_validation, "--", "L1:", 0, "--", "L2", lamL2)
-    #
-    #    if (accuracy_validation > best_accuracy) :
-    #        best_model = model
-    #        best_accuracy = accuracy_validation
-    #        best_grad_norm_array = grad_norm_array
-    #        best_error_array = err_array
-    #        best_time = end - start 
 
     validEndTime = time.time()
 

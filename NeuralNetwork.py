@@ -132,7 +132,6 @@ class NeuralNetwork :
             prevLayer : Layer = currLayer.prevLayer
             de_da = de_da_list[i]
             da_dw = np.append(prevLayer.getOutput().T, [[-1] * prevLayer.getOutput().shape[0]], axis = 0).T
-            #row_wise_outer = np.array([np.outer(de_da[r], da_dw[r]).reshape(-1) for r in range(0, da_dw.shape[0])])
 
             ## Calcolo del prodotto esterno tra righe con stesso indice usando np.einsum
             row_wise_tensor : np.ndarray = np.einsum('ij,ik->ijk', de_da, da_dw)
@@ -180,7 +179,6 @@ class NeuralNetwork :
             
             for j in range(0, layer.neuronNumber) :
                 dg = layer.relu_derivative(layer.aArray[point_index][j])
-               #print(de_da_prev.shape, next_layer.weightMatrix[j].shape)
                 de_da.append(dg * np.dot(de_da_prev, next_layer.weightMatrix[j]))
                 for i in range(0, prev_layer.neuronNumber + 1) :
                     if (i == prev_layer.neuronNumber) :
@@ -232,10 +230,8 @@ class NeuralNetwork :
         total_iter_num = 1
         indexes = np.arange(0, len(normalized_X_train))
         min_err = float("inf")
-        # gradient_norm >= epsilon and 
         while (k <= epochs) :
             mini_batch_dim = min(int(1/32 * len(normalized_X_train) + iter_num), len(normalized_X_train))
-            # mini_batch_dim = min(32 * iter_num, len(normalized_X_train))
 
             if (not with_replacement) : 
                 ## Non prendo due volte lo stesso punto nella stessa epoca
@@ -274,7 +270,6 @@ class NeuralNetwork :
                 k += 1
                 iter_num = 1
                 samples_seen[samples_seen == 1] = 0
-        
         
         print("Errore minimo:", min_err)
         self.set_best_weights()
@@ -317,7 +312,6 @@ class NeuralNetwork :
         while (gradient_norm >= epsilon and k <= epochs) :
 
             mini_batch_dim = min(int(1/32 * len(normalized_X_train) + iter_num), len(normalized_X_train))
-            # mini_batch_dim = min(32 * iter_num, len(normalized_X_train))
 
             if (not with_replacement) : 
                 ## Non prendo due volte lo stesso punto nella stessa epoca
@@ -395,7 +389,6 @@ class NeuralNetwork :
         return
     
     def change_best_weights(self) :
-        #print("CHANGED")
         currLayer : Layer = self.firstLayer.nextLayer
         while (currLayer != None) :
             currLayer.change_best_weights()

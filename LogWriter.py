@@ -84,10 +84,8 @@ def residual_plot(residual : pd.DataFrame, dataset_name : str) -> None :
 
     figure, axes = plt.subplots(nrows = 1, ncols = 1, tight_layout = True)
     residual_array = residual.values
-    # bins_num = int(np.sqrt(len(residual)))
     mean = residual_array.mean()
     std_dev = residual_array.std()
-    #bins_num = int(1 + np.log2(len(residual_array)))
     iqr = np.percentile(residual_array, 75) - np.percentile(residual_array, 25)
     bins_num = int(np.sqrt(len(residual_array)))
 
@@ -100,8 +98,6 @@ def residual_plot(residual : pd.DataFrame, dataset_name : str) -> None :
     axes.legend()
 
     figure.savefig(mainDirectoryPath + "/residual_hist")
-    #axes.figure.show()
-    # res_hist.figure.savefig("./log/" + dataset_name + "/residual_hist")
 
 
 def cartesian_plot(x : list, y : list, x_label : str, y_label : str, title : str, dataset_name : str) -> None :

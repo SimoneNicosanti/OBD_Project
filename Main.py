@@ -7,10 +7,11 @@ from CrossValidator import *
 import datetime
 
 
-
 def main() :
     np.random.seed(123456)
 
+    ## Cambiare qui la stringa con il nome relativo al dataset da utilizzare
+    ## (Nomi presenti in DatasetInfo.py)
     dataset_name = "MNIST"
 
     dataset_info = dataset_dict[dataset_name]
@@ -112,5 +113,3 @@ def main() :
 
 if __name__ == "__main__" :
     main()
-
-

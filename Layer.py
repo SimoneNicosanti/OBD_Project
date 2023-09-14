@@ -128,7 +128,6 @@ class RMSPropLayer(Layer) :
         self.biasArray -= bias_alpha * (bias_incr + self.lambdaL1 * np.sign(self.biasArray) + 2 * self.lambdaL2 * self.biasArray)
 
 
-
 class AdamLayer(Layer) :
     def __init__(self, neuronNumber : int, lambdaL1 : float, lambdaL2 : float) -> None :
         super().__init__(neuronNumber, lambdaL1, lambdaL2)
