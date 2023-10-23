@@ -12,7 +12,7 @@ def main() :
 
     ## Cambiare qui la stringa con il nome relativo al dataset da utilizzare
     ## (Nomi presenti in DatasetInfo.py)
-    dataset_name = "MNIST"
+    dataset_name = "Chinese"
 
     dataset_info = dataset_dict[dataset_name]
     if (dataset_name == "Chinese") :

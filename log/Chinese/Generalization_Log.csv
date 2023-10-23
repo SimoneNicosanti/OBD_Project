@@ -10,3 +10,4 @@ Accuracy,EpochsNum,SAGA,Replacement,Method,ExecutionTime,NetworkConfig,LambdaL1,
 
 0.6816666666666666,25,False,False,NADAM,0:09:06.176453,"[128, 128]",0.0,10.0
 
+0.7433333333333333,5,False,False,NADAM,0:01:48.131513,"[128, 128]",0.0,0.001
